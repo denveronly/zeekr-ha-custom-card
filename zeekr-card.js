@@ -9,40 +9,12 @@
  * charging_open: false          # start with the Charging section expanded
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.0.0";
+const ZEEKR_CARD_VERSION = "1.1.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
   {
-   "type": "grid",
-   "columns": 4,
-   "square": false,
-   "cards": [
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_battery_level",
-     "name": "Battery",
-     "vertical": true
-    },
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_range",
-     "name": "Range",
-     "vertical": true
-    },
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_interior_temperature",
-     "name": "Inside",
-     "vertical": true
-    },
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_odometer",
-     "name": "Odometer",
-     "vertical": true
-    }
-   ]
+   "type": "zeekr-header"
   },
   {
    "type": "conditional",
@@ -156,7 +128,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_front_left",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "32%",
       "top": "42%"
@@ -165,7 +137,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_front_right",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "68%",
       "top": "42%"
@@ -174,7 +146,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_rear_left",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "32%",
       "top": "61%"
@@ -183,7 +155,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_rear_right",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "68%",
       "top": "61%"
@@ -192,7 +164,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "cover.CAR_all_windows",
-     "icon": "mdi:window-shutter",
+     "icon": "mdi:car-windshield-outline",
      "tap_action": {
       "action": "toggle"
      },
@@ -202,6 +174,17 @@ const ZEEKR_TEMPLATES = {
      "style": {
       "left": "50%",
       "top": "51%"
+     }
+    },
+    {
+     "type": "state-label",
+     "entity": "cover.CAR_all_windows",
+     "prefix": "Windows: ",
+     "style": {
+      "left": "50%",
+      "top": "57%",
+      "font-size": "11px",
+      "opacity": "0.85"
      }
     },
     {
@@ -433,7 +416,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_front_left",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -462,7 +445,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_front_right",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -491,7 +474,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_rear_left",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -520,7 +503,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_rear_right",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -661,6 +644,19 @@ const ZEEKR_TEMPLATES = {
      "name": "Sentry",
      "tap_action": {
       "action": "toggle"
+     }
+    },
+    {
+     "type": "button",
+     "entity": "button.CAR_refresh_now",
+     "name": "Refresh",
+     "icon": "mdi:refresh",
+     "tap_action": {
+      "action": "perform-action",
+      "perform_action": "button.press",
+      "target": {
+       "entity_id": "button.CAR_refresh_now"
+      }
      }
     },
     {
@@ -831,35 +827,7 @@ const ZEEKR_TEMPLATES = {
  ],
  "side": [
   {
-   "type": "grid",
-   "columns": 4,
-   "square": false,
-   "cards": [
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_battery_level",
-     "name": "Battery",
-     "vertical": true
-    },
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_range",
-     "name": "Range",
-     "vertical": true
-    },
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_interior_temperature",
-     "name": "Inside",
-     "vertical": true
-    },
-    {
-     "type": "tile",
-     "entity": "sensor.CAR_odometer",
-     "name": "Odometer",
-     "vertical": true
-    }
-   ]
+   "type": "zeekr-header"
   },
   {
    "type": "conditional",
@@ -957,7 +925,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_front_right",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "47%",
       "top": "7%"
@@ -975,7 +943,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_rear_right",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "63%",
       "top": "7%"
@@ -984,7 +952,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_front_left",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "62%",
       "top": "37%"
@@ -993,7 +961,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "binary_sensor.CAR_window_rear_left",
-     "icon": "mdi:car-door-lock",
+     "icon": "mdi:window-closed-variant",
      "style": {
       "left": "78%",
       "top": "37%"
@@ -1020,7 +988,7 @@ const ZEEKR_TEMPLATES = {
     {
      "type": "state-icon",
      "entity": "cover.CAR_all_windows",
-     "icon": "mdi:window-shutter",
+     "icon": "mdi:car-windshield-outline",
      "tap_action": {
       "action": "toggle"
      },
@@ -1030,6 +998,17 @@ const ZEEKR_TEMPLATES = {
      "style": {
       "left": "70%",
       "top": "26%"
+     }
+    },
+    {
+     "type": "state-label",
+     "entity": "cover.CAR_all_windows",
+     "prefix": "Windows: ",
+     "style": {
+      "left": "70%",
+      "top": "32%",
+      "font-size": "11px",
+      "opacity": "0.85"
      }
     },
     {
@@ -1178,7 +1157,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_front_right",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -1236,7 +1215,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_rear_right",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -1265,7 +1244,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_front_left",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -1294,7 +1273,7 @@ const ZEEKR_TEMPLATES = {
       {
        "type": "icon",
        "entity": "binary_sensor.CAR_window_rear_left",
-       "icon": "mdi:car-door-lock",
+       "icon": "mdi:window-open-variant",
        "title": "Open",
        "tap_action": {
         "action": "more-info"
@@ -1497,6 +1476,19 @@ const ZEEKR_TEMPLATES = {
     },
     {
      "type": "button",
+     "entity": "button.CAR_refresh_now",
+     "name": "Refresh",
+     "icon": "mdi:refresh",
+     "tap_action": {
+      "action": "perform-action",
+      "perform_action": "button.press",
+      "target": {
+       "entity_id": "button.CAR_refresh_now"
+      }
+     }
+    },
+    {
+     "type": "button",
      "entity": "cover.CAR_sunshade",
      "name": "Sunshade",
      "tap_action": {
@@ -1668,6 +1660,40 @@ const DEFAULT_IMAGES = {
   side: "/local/zeekr001_side.png",
 };
 
+const ZK_STATS = [
+  { key: "battery_level", label: "Battery", icon: "mdi:battery-high", digits: 0 },
+  { key: "range", label: "Range", icon: "mdi:map-marker-distance", digits: 0 },
+  { key: "interior_temperature", label: "Inside", icon: "mdi:thermometer", digits: 1 },
+  { key: "odometer", label: "Odometer", icon: "mdi:counter", digits: 0 },
+];
+
+// Drop anything that points at an entity this car doesn't have, so a missing
+// feature (e.g. no sunshade on the 001) disappears instead of showing a warning.
+function zkPrune(conf, has) {
+  if (Array.isArray(conf)) {
+    return conf.map((c) => zkPrune(c, has)).filter((c) => c !== null);
+  }
+  if (!conf || typeof conf !== "object") return conf;
+  if (typeof conf.entity === "string" && conf.entity.includes(".") && !has(conf.entity)) return null;
+  const out = { ...conf };
+  if (Array.isArray(out.conditions)) {
+    out.conditions = zkPrune(out.conditions, has);
+    if (!out.conditions.length) return null;
+  }
+  for (const key of ["cards", "elements", "entities"]) {
+    if (Array.isArray(out[key])) {
+      out[key] = zkPrune(out[key], has);
+      if (!out[key].length && key !== "entities") return null;
+    }
+  }
+  if (out.card) {
+    out.card = zkPrune(out.card, has);
+    if (!out.card) return null;
+  }
+  if (out.type === "grid" && Array.isArray(out.cards)) out.columns = Math.min(out.columns || 4, out.cards.length);
+  return out;
+}
+
 class ZeekrCard extends HTMLElement {
   setConfig(config) {
     if (!config || !config.prefix) {
@@ -1677,14 +1703,19 @@ class ZeekrCard extends HTMLElement {
     if (!ZEEKR_TEMPLATES[layout]) {
       throw new Error("layout must be 'top' or 'side'");
     }
-    this._config = { ...config, layout };
-    this._built = false;
-    this._build();
+    this._config = { ...config, layout, prefix: String(config.prefix).replace(/\.$/, "") };
+    this._builtFor = null;
+    if (this._hass) this._build();
   }
 
   set hass(hass) {
     this._hass = hass;
+    if (this._config && this._builtFor !== this._config) {
+      this._build();
+      return;
+    }
     (this._children || []).forEach((c) => (c.hass = hass));
+    this._updateHeader();
   }
 
   getCardSize() {
@@ -1695,19 +1726,62 @@ class ZeekrCard extends HTMLElement {
     return { prefix: "zeekr_001_", layout: "top" };
   }
 
+  _id(domain, key) {
+    return `${domain}.${this._config.prefix}${key}`;
+  }
+
   _cardConfigs() {
-    const prefix = String(this._config.prefix).replace(/\.$/, "");
-    const raw = JSON.stringify(ZEEKR_TEMPLATES[this._config.layout]).split("CAR_").join(prefix);
-    const cards = JSON.parse(raw);
+    const raw = JSON.stringify(ZEEKR_TEMPLATES[this._config.layout]).split("CAR_").join(this._config.prefix);
+    let cards = JSON.parse(raw);
     const image = this._config.image || DEFAULT_IMAGES[this._config.layout];
     cards.forEach((c) => {
       if (c.type === "picture-elements") c.image = image;
     });
+    const states = (this._hass && this._hass.states) || null;
+    if (states) cards = zkPrune(cards, (id) => id in states);
     return cards;
+  }
+
+  _moreInfo(entityId) {
+    const ev = new Event("hass-more-info", { bubbles: true, composed: true });
+    ev.detail = { entityId };
+    this.dispatchEvent(ev);
+  }
+
+  _makeHeader() {
+    const wrap = document.createElement("div");
+    wrap.className = "zk-stats";
+    this._statEls = [];
+    for (const s of ZK_STATS) {
+      const id = this._id("sensor", s.key);
+      const item = document.createElement("div");
+      item.className = "zk-stat";
+      item.innerHTML = `<ha-icon icon="${s.icon}"></ha-icon><div class="zk-val">–</div><div class="zk-lbl">${s.label}</div>`;
+      item.addEventListener("click", () => this._moreInfo(id));
+      wrap.appendChild(item);
+      this._statEls.push({ s, id, val: item.querySelector(".zk-val") });
+    }
+    return wrap;
+  }
+
+  _updateHeader() {
+    if (!this._statEls || !this._hass) return;
+    const lang = (this._hass.locale && this._hass.locale.language) || undefined;
+    for (const { s, id, val } of this._statEls) {
+      const st = this._hass.states[id];
+      if (!st || isNaN(parseFloat(st.state))) {
+        val.textContent = st ? st.state : "–";
+        continue;
+      }
+      const n = Number(parseFloat(st.state).toFixed(s.digits));
+      const unit = st.attributes.unit_of_measurement || "";
+      val.textContent = `${n.toLocaleString(lang, { maximumFractionDigits: s.digits })}${unit === "%" ? "%" : unit ? " " + unit : ""}`;
+    }
   }
 
   async _build() {
     const token = (this._buildToken = {});
+    this._builtFor = this._config;
     const helpers = await window.loadCardHelpers();
     if (token !== this._buildToken) return;
     this._children = [];
@@ -1717,6 +1791,15 @@ class ZeekrCard extends HTMLElement {
     const style = document.createElement("style");
     style.textContent = `
       .zeekr-card { display: flex; flex-direction: column; gap: 8px; }
+      .zk-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+      .zk-stat { background: var(--ha-card-background, var(--card-background-color));
+        border-radius: var(--ha-card-border-radius, 12px); padding: 10px 6px; text-align: center; cursor: pointer;
+        border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color)); }
+      .zk-stat ha-icon { color: var(--state-icon-color, var(--primary-color)); --mdc-icon-size: 22px; }
+      .zk-val { font-size: 17px; font-weight: 500; color: var(--primary-text-color); margin-top: 2px; white-space: nowrap; }
+      .zk-lbl { font-size: 12px; color: var(--secondary-text-color); }
+      .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
+        --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
         background: var(--ha-card-background, var(--card-background-color)); }
       .zk-head { display: flex; align-items: center; gap: 10px; padding: 12px 16px; cursor: pointer;
@@ -1731,7 +1814,9 @@ class ZeekrCard extends HTMLElement {
 
     const icons = { Charging: "mdi:ev-station", Climate: "mdi:thermostat" };
     for (const conf of this._cardConfigs()) {
-      if (conf.type === "custom:expander-card") {
+      if (conf.type === "zeekr-header") {
+        root.appendChild(this._makeHeader());
+      } else if (conf.type === "custom:expander-card") {
         const sec = document.createElement("div");
         sec.className = "zk-section";
         const key = (conf.title || "").toLowerCase() + "_open";
@@ -1752,6 +1837,7 @@ class ZeekrCard extends HTMLElement {
         root.appendChild(sec);
       } else {
         const el = helpers.createCardElement(conf);
+        if (conf.type === "picture-elements") el.classList.add("zk-car");
         this._children.push(el);
         root.appendChild(el);
       }
@@ -1760,7 +1846,7 @@ class ZeekrCard extends HTMLElement {
     if (this._hass) this._children.forEach((c) => (c.hass = this._hass));
     this.innerHTML = "";
     this.appendChild(root);
-    this._built = true;
+    this._updateHeader();
   }
 }
 
