@@ -21,43 +21,56 @@ A Home Assistant dashboard card for the **Zeekr 001**, built for the
   and ventilation, steering wheel heating, defrost, outside temperature,
   departure schedule
 
-## Files
+## Install (HACS)
 
-| File | Use it with |
-| --- | --- |
-| [`zeekr001_card.yaml`](zeekr001_card.yaml) | a **top-view** image, front pointing up (recommended) |
-| [`zeekr001_card_side.yaml`](zeekr001_card_side.yaml) | a **3/4 front-left** studio photo, car facing left |
+1. HACS → ⋮ → **Custom repositories** → add
+   `https://github.com/denveronly/zeekr-ha-custom-card`, type **Dashboard**.
+2. Download **Zeekr card**, then reload the browser (Ctrl/Cmd + Shift + R).
+3. Save your car image in `/config/www/` (see [Car image](#car-image)).
+4. Add the card to a dashboard (Edit → Add card → Manual):
 
-## Requirements
+```yaml
+type: custom:zeekr-card
+prefix: zeekr_001_
+```
 
-- The [Zeekr EV integration](https://github.com/denveronly/zeekr_homeassistant_china_gric),
-  GRIC channel (needed for the controls)
-- [Expander Card](https://github.com/MelleD/lovelace-expander-card) from HACS,
-  for the Charging and Climate drop-downs
-- A car image in `/config/www/` (not included in this repo; see below)
+`prefix` is the start of your car's entity IDs. Find it under Settings →
+Devices & services → Entities by searching "battery level": if the entity is
+`sensor.zeekr_001_battery_level`, the prefix is `zeekr_001_`.
+
+### Options
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `prefix` | *(required)* | Entity prefix of your car |
+| `layout` | `top` | `top` for a top-view image, `side` for a 3/4 front-left photo |
+| `image` | `/local/zeekr001_top.png` (top) or `/local/zeekr001_side.png` (side) | Car image URL |
+| `charging_open` | `false` | Start with the Charging section expanded |
+| `climate_open` | `false` | Start with the Climate section expanded |
+
+No other plugins are needed: the card draws its own Charging and Climate
+drop-downs.
 
 ## Car image
 
-The positions in `zeekr001_card.yaml` are tuned for a **600 × 700 px PNG with a
-transparent background**: the top-view car centred, front pointing up, filling
-about 54 % of the width and the full height. Save it as
-`/config/www/zeekr001_top.png` (Home Assistant serves it as
-`/local/zeekr001_top.png`; restart HA if the `www` folder is new).
+The `top` layout is tuned for a **600 × 700 px PNG with a transparent
+background**: the top-view car centred, front pointing up, filling about 54 %
+of the width and the full height. Save it as `/config/www/zeekr001_top.png`
+(Home Assistant serves it as `/local/zeekr001_top.png`; restart HA if the
+`www` folder is new).
 
-For the side version, save a 3/4 front-left photo as
-`/config/www/zeekr001_side.png`, cropped so the car fills the frame.
+For the `side` layout, save a 3/4 front-left photo, car facing left and filling
+the frame, as `/config/www/zeekr001_side.png`.
 
 Car photos are not included in this repo because of copyright. Use your own
-photo or a press image you're allowed to use. If your image is framed
-differently, nudge the `left` / `top` percentages of the elements.
+photo or a press image you're allowed to use.
 
-## Install
+## Without HACS (plain YAML)
 
-1. Open the YAML and replace every `CAR_` with your car's entity prefix. Find
-   it under Settings → Devices & services → Entities by searching
-   "battery level": if the entity is `sensor.zeekr_001_battery_level`, replace
-   `CAR_` with `zeekr_001_`.
-2. Dashboard → Edit → Add card → **Manual** → paste the YAML.
+The same card as plain Lovelace YAML is in [`yaml/`](yaml/): replace every
+`CAR_` with your prefix and paste it into a Manual card. That version needs
+[Expander Card](https://github.com/MelleD/lovelace-expander-card) for the
+drop-downs, and its positions are percentages you can tweak per element.
 
 ## Notes
 
