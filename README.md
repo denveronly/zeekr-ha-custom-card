@@ -21,8 +21,8 @@ A Home Assistant dashboard card for the **Zeekr 001**, built for the
   a compact schedule row (toggle · start → end), then any `extra_entities`
 - **Climate** drop-down: thermostat dial with the Heat/Cool and Off buttons
   right under it, rapid cool / rapid heat in the top corners and steering
-  wheel heating / defrost in the bottom corners, a 2 × 2 grid of seat heating
-  and ventilation, pre-conditioning just above the mode label, then climate run time
+  wheel heating / defrost in the bottom corners, the four heated seats then the two
+  ventilated seats with Off · 1 · 2 · 3 buttons (orange flame / blue wind when on), a "Pre" (pre-conditioning) toggle near the top of the dial, then climate run time
 
 ## Install (HACS)
 

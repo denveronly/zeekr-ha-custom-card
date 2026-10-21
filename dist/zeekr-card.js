@@ -15,7 +15,7 @@
  *     icon: mdi:timer-outline
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.7.0";
+const ZEEKR_CARD_VERSION = "1.8.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1569,6 +1569,7 @@ class ZeekrCard extends HTMLElement {
     this._updateOverlays();
     this._updateSched();
     this._updateCtrls();
+    this._updateSeats();
   }
 
   getCardSize() {
@@ -2006,7 +2007,7 @@ class ZeekrCard extends HTMLElement {
         ["tr", "button", "rapid_heating", "mdi:fire", "Rapid heat"],
         ["bl", "switch", "steering_wheel_heating", "mdi:steering", "Wheel"],
         ["br", "switch", "windshield_defrost", "mdi:car-defrost-front", "Defrost"],
-        ["mid", "switch", "departure_climate", "mdi:car-clock", "Pre-condition"],
+        ["mid", "switch", "departure_climate", "mdi:car-clock", "Pre"],
       ];
       this._corners = [];
       for (const [pos, domain, key, icon, label] of corners) {
@@ -2033,20 +2034,29 @@ class ZeekrCard extends HTMLElement {
       body.appendChild(wrap);
     }
 
-    const seats = this._prune({
-      type: "grid", columns: 2, square: false,
-      cards: [
-        ["select", "seat_heating_driver", "Driver heat", "mdi:car-seat-heater"],
-        ["select", "seat_heating_passenger", "Passenger heat", "mdi:car-seat-heater"],
-        ["select", "seat_ventilation_driver", "Driver vent", "mdi:car-seat-cooler"],
-        ["select", "seat_ventilation_passenger", "Passenger vent", "mdi:car-seat-cooler"],
-        ["select", "seat_heating_rear_left", "Rear left heat", "mdi:car-seat-heater"],
-        ["select", "seat_heating_rear_right", "Rear right heat", "mdi:car-seat-heater"],
-      ].map(([d, k, name, icon]) => ({
-        type: "tile", entity: id(d, k), name, icon, features: [{ type: "select-options" }],
-      })),
-    });
-    if (seats) this._addCard(helpers, body, seats);
+    // Seats: 4 heated first, then 2 ventilated; segmented level buttons.
+    const seatDefs = [
+      ["seat_heating_driver", "Driver", "heat"],
+      ["seat_heating_passenger", "Passenger", "heat"],
+      ["seat_heating_rear_left", "Rear left", "heat"],
+      ["seat_heating_rear_right", "Rear right", "heat"],
+      ["seat_ventilation_driver", "Driver", "vent"],
+      ["seat_ventilation_passenger", "Passenger", "vent"],
+    ].map(([k, name, kind]) => ({ eid: id("select", k), name, kind })).filter((s) => this._has(s.eid));
+    if (seatDefs.length) {
+      const grid = document.createElement("div");
+      grid.className = "zk-seats";
+      this._seats = [];
+      for (const s of seatDefs) {
+        const el = document.createElement("div");
+        el.className = `zk-seat ${s.kind}`;
+        el.innerHTML = `<div class="zk-seat-h"><ha-icon></ha-icon><span>${s.name}</span></div><div class="zk-seg"></div>`;
+        el.querySelector(".zk-seat-h").addEventListener("click", () => this._moreInfo(s.eid));
+        grid.appendChild(el);
+        this._seats.push({ ...s, el });
+      }
+      body.appendChild(grid);
+    }
 
     const rest = this._prune({
       type: "entities",
@@ -2057,6 +2067,36 @@ class ZeekrCard extends HTMLElement {
     if (rest && rest.entities.some((e) => e.entity)) {
       rest.entities = rest.entities.filter((e, i, a) => e.entity || (a[i + 1] && a[i + 1].entity));
       this._addCard(helpers, body, rest);
+    }
+  }
+
+  _updateSeats() {
+    if (!this._seats || !this._hass) return;
+    for (const s of this._seats) {
+      const st = this._hass.states[s.eid];
+      const opts = (st && st.attributes.options) || [];
+      const seg = s.el.querySelector(".zk-seg");
+      if (seg.dataset.opts !== JSON.stringify(opts)) {
+        seg.innerHTML = "";
+        opts.forEach((o, i) => {
+          const b = document.createElement("button");
+          const m = String(o).match(/\d+/);
+          b.textContent = i === 0 ? "Off" : m ? m[0] : String(o);
+          b.dataset.opt = o;
+          b.addEventListener("click", () =>
+            this._hass.callService("select", "select_option", { entity_id: s.eid, option: o }));
+          seg.appendChild(b);
+        });
+        seg.dataset.opts = JSON.stringify(opts);
+      }
+      const val = st ? st.state : "";
+      const on = !!st && opts.length > 0 && val !== opts[0] && val !== "unavailable" && val !== "unknown";
+      s.el.classList.toggle("on", on);
+      s.el.classList.toggle("na", !st || val === "unavailable");
+      seg.querySelectorAll("button").forEach((b) => b.classList.toggle("sel", b.dataset.opt === val));
+      const icon = s.kind === "heat" ? (on ? "mdi:fire" : "mdi:car-seat-heater") : (on ? "mdi:weather-windy" : "mdi:car-seat-cooler");
+      const ic = s.el.querySelector("ha-icon");
+      if (ic.getAttribute("icon") !== icon) ic.setAttribute("icon", icon);
     }
   }
 
@@ -2253,7 +2293,7 @@ class ZeekrCard extends HTMLElement {
       .zk-ov-odo > div { display: flex; align-items: center; gap: 4px; }
       .zk-ov-odo > div + div b { font-weight: 400; color: var(--secondary-text-color); }
       .zk-ov-upd { top: 12px; right: 10px; transform: none; font-size: 11px; color: var(--secondary-text-color); }
-      .zk-corner.mid { top: 24%; left: 50%; transform: translateX(-50%); flex-direction: row; width: auto; gap: 6px;
+      .zk-corner.mid { top: 15%; left: 50%; transform: translateX(-50%); flex-direction: row; width: auto; gap: 6px;
         padding: 5px 12px; border-radius: 999px; }
       .zk-corner.mid span { font-size: 12px; }
       .zk-corner.mid ha-icon { --mdc-icon-size: 18px; }
@@ -2281,6 +2321,19 @@ class ZeekrCard extends HTMLElement {
       .zk-ctrl-item select { flex: 1; min-width: 0; height: 32px; border: none; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 14px;
         background: var(--ha-card-background, var(--card-background-color)); color: var(--primary-text-color); cursor: pointer; }
       .zk-ctrl-item.na { opacity: .45; }
+      .zk-seats { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 0 12px; }
+      .zk-seat { display: flex; flex-direction: column; gap: 6px; padding: 8px; border-radius: 12px; background: var(--secondary-background-color); }
+      .zk-seat-h { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--primary-text-color); cursor: pointer; }
+      .zk-seat-h ha-icon { --mdc-icon-size: 18px; color: var(--secondary-text-color); transition: color .2s; }
+      .zk-seat.heat.on .zk-seat-h ha-icon { color: #ff7043; }
+      .zk-seat.vent.on .zk-seat-h ha-icon { color: #4fc3f7; }
+      .zk-seg { display: flex; gap: 3px; padding: 3px; border-radius: 9px; background: var(--ha-card-background, var(--card-background-color)); }
+      .zk-seg button { flex: 1; height: 26px; border: none; border-radius: 7px; background: none; cursor: pointer;
+        font: inherit; font-size: 12px; color: var(--secondary-text-color); transition: background .2s, color .2s; }
+      .zk-seg button.sel { background: var(--secondary-background-color); color: var(--primary-text-color); font-weight: 500; }
+      .zk-seat.heat.on .zk-seg button.sel { background: rgba(255, 112, 67, 0.25); color: #ff7043; }
+      .zk-seat.vent.on .zk-seg button.sel { background: rgba(79, 195, 247, 0.22); color: #4fc3f7; }
+      .zk-seat.na { opacity: .45; }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
@@ -2354,6 +2407,7 @@ class ZeekrCard extends HTMLElement {
     this._updateOverlays();
     this._updateSched();
     this._updateCtrls();
+    this._updateSeats();
   }
 }
 
