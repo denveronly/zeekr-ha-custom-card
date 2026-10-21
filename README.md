@@ -10,6 +10,9 @@ A Home Assistant dashboard card for the **Zeekr 001**, built for the
   - **Trunk open / close** (rear)
   - **Charge port lid** toggle at the **left rear**, where the 001's port is
   - tyre pressure next to each wheel
+  - anything **open** (door, window, hood, trunk, charge port lid) gets a
+    glowing **red** badge on its spot, and a red warning bar appears above the
+    car; both disappear when it's closed again
 - **Quick actions:** lock, flash lights, sentry mode, sunshade
 - **Charging** drop-down: charging switch, plugged in, charge limit,
   power / voltage / current, time to full, charging schedule with start and
