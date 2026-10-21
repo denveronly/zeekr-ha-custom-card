@@ -9,81 +9,12 @@
  * charging_open: false          # start with the Charging section expanded
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.2.0";
+const ZEEKR_CARD_VERSION = "1.3.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
   {
    "type": "zeekr-header"
-  },
-  {
-   "type": "conditional",
-   "conditions": [
-    {
-     "condition": "or",
-     "conditions": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_front_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_front_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_rear_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_rear_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_front_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_front_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_rear_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_rear_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_hood",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_trunk",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "lock.CAR_charge_port_lid",
-       "state": "unlocked"
-      }
-     ]
-    }
-   ],
-   "card": {
-    "type": "markdown",
-    "content": "<ha-alert alert-type=\"error\">Something is open: check the red marks on the car</ha-alert>"
-   }
   },
   {
    "type": "picture-elements",
@@ -828,75 +759,6 @@ const ZEEKR_TEMPLATES = {
  "side": [
   {
    "type": "zeekr-header"
-  },
-  {
-   "type": "conditional",
-   "conditions": [
-    {
-     "condition": "or",
-     "conditions": [
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_front_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_front_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_rear_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_door_rear_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_front_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_front_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_rear_left",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_window_rear_right",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_hood",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "binary_sensor.CAR_trunk",
-       "state": "on"
-      },
-      {
-       "condition": "state",
-       "entity": "lock.CAR_charge_port_lid",
-       "state": "unlocked"
-      }
-     ]
-    }
-   ],
-   "card": {
-    "type": "markdown",
-    "content": "<ha-alert alert-type=\"error\">Something is open: check the red marks on the car</ha-alert>"
-   }
   },
   {
    "type": "picture-elements",
@@ -1662,11 +1524,19 @@ const DEFAULT_IMAGES = {
   side: "/local/zeekr001_side.png",
 };
 
-const ZK_STATS = [
-  { key: "battery_level", label: "Battery", icon: "mdi:battery-high", digits: 0 },
-  { key: "range", label: "Range", icon: "mdi:map-marker-distance", digits: 0 },
-  { key: "interior_temperature", label: "Inside", icon: "mdi:thermometer", digits: 1 },
-  { key: "odometer", label: "Odometer", icon: "mdi:counter", digits: 0 },
+// What counts as "open" for the warning pill on the photo.
+const ZK_OPEN = [
+  ["binary_sensor", "door_front_left", "front-left door"],
+  ["binary_sensor", "door_front_right", "front-right door"],
+  ["binary_sensor", "door_rear_left", "rear-left door"],
+  ["binary_sensor", "door_rear_right", "rear-right door"],
+  ["binary_sensor", "window_front_left", "front-left window"],
+  ["binary_sensor", "window_front_right", "front-right window"],
+  ["binary_sensor", "window_rear_left", "rear-left window"],
+  ["binary_sensor", "window_rear_right", "rear-right window"],
+  ["binary_sensor", "hood", "hood"],
+  ["binary_sensor", "trunk", "trunk"],
+  ["lock", "charge_port_lid", "charge port"],
 ];
 
 // Drop anything that points at an entity this car doesn't have, so a missing
@@ -1718,6 +1588,7 @@ class ZeekrCard extends HTMLElement {
     }
     (this._children || []).forEach((c) => (c.hass = hass));
     this._updateHeader();
+    this._updateOpen();
   }
 
   getCardSize() {
@@ -1750,35 +1621,117 @@ class ZeekrCard extends HTMLElement {
     this.dispatchEvent(ev);
   }
 
+  _st(domain, key) {
+    return this._hass && this._hass.states[this._id(domain, key)];
+  }
+
+  _num(domain, key, digits) {
+    const st = this._st(domain, key);
+    if (!st || isNaN(parseFloat(st.state))) return null;
+    const lang = (this._hass.locale && this._hass.locale.language) || undefined;
+    const n = Number(parseFloat(st.state).toFixed(digits));
+    return { n, text: n.toLocaleString(lang, { maximumFractionDigits: digits }), unit: st.attributes.unit_of_measurement || "" };
+  }
+
+  _ago(value) {
+    const t = Date.parse(value);
+    if (isNaN(t)) return null;
+    const min = Math.max(0, Math.round((Date.now() - t) / 60000));
+    if (min < 1) return "just now";
+    if (min < 60) return `${min} min`;
+    const h = Math.round(min / 60);
+    if (h < 48) return `${h} h`;
+    return `${Math.round(h / 24)} d`;
+  }
+
   _makeHeader() {
-    const wrap = document.createElement("div");
-    wrap.className = "zk-stats";
-    this._statEls = [];
-    for (const s of ZK_STATS) {
-      const id = this._id("sensor", s.key);
-      const item = document.createElement("div");
-      item.className = "zk-stat";
-      item.innerHTML = `<ha-icon icon="${s.icon}"></ha-icon><div class="zk-val">–</div><div class="zk-lbl">${s.label}</div>`;
-      item.addEventListener("click", () => this._moreInfo(id));
-      wrap.appendChild(item);
-      this._statEls.push({ s, id, val: item.querySelector(".zk-val") });
-    }
-    return wrap;
+    const hero = document.createElement("div");
+    hero.className = "zk-hero";
+    hero.innerHTML = `
+      <div class="zk-main" data-more="sensor:battery_level">
+        <div class="zk-soc-row">
+          <span class="zk-soc">–</span><span class="zk-soc-unit">%</span>
+          <span class="zk-pill zk-charge" hidden><ha-icon icon="mdi:lightning-bolt"></ha-icon><span></span></span>
+        </div>
+        <div class="zk-bar"><div class="zk-fill"></div><div class="zk-limit" hidden></div></div>
+        <div class="zk-range" data-more="sensor:range"><ha-icon icon="mdi:map-marker-distance"></ha-icon><span>–</span></div>
+      </div>
+      <div class="zk-chips">
+        <div class="zk-chip" data-more="sensor:interior_temperature"><ha-icon icon="mdi:car-seat"></ha-icon><span class="v">–</span><span class="l">Inside</span></div>
+        <div class="zk-chip" data-more="sensor:exterior_temperature"><ha-icon icon="mdi:weather-partly-cloudy"></ha-icon><span class="v">–</span><span class="l">Outside</span></div>
+        <div class="zk-chip" data-more="sensor:odometer"><ha-icon icon="mdi:counter"></ha-icon><span class="v">–</span><span class="l">Odometer</span></div>
+        <div class="zk-chip" data-more="sensor:last_status_report"><ha-icon icon="mdi:access-point"></ha-icon><span class="v">–</span><span class="l">Updated</span></div>
+      </div>`;
+    hero.querySelectorAll("[data-more]").forEach((el) => {
+      el.addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        const [domain, key] = el.dataset.more.split(":");
+        this._moreInfo(this._id(domain, key));
+      });
+    });
+    this._hero = hero;
+    return hero;
   }
 
   _updateHeader() {
-    if (!this._statEls || !this._hass) return;
-    const lang = (this._hass.locale && this._hass.locale.language) || undefined;
-    for (const { s, id, val } of this._statEls) {
-      const st = this._hass.states[id];
-      if (!st || isNaN(parseFloat(st.state))) {
-        val.textContent = st ? st.state : "–";
-        continue;
-      }
-      const n = Number(parseFloat(st.state).toFixed(s.digits));
-      const unit = st.attributes.unit_of_measurement || "";
-      val.textContent = `${n.toLocaleString(lang, { maximumFractionDigits: s.digits })}${unit === "%" ? "%" : unit ? " " + unit : ""}`;
-    }
+    const h = this._hero;
+    if (!h || !this._hass) return;
+    const soc = this._num("sensor", "battery_level", 0);
+    h.querySelector(".zk-soc").textContent = soc ? soc.text : "–";
+    const fill = h.querySelector(".zk-fill");
+    const pct = soc ? Math.max(0, Math.min(100, soc.n)) : 0;
+    fill.style.width = pct + "%";
+    fill.style.backgroundColor = pct <= 20 ? "var(--error-color, #e53935)" : pct <= 50 ? "var(--warning-color, #f9a825)" : "var(--success-color, #43a047)";
+    const limit = this._num("number", "charge_limit", 0) || this._num("sensor", "charge_limit", 0);
+    const lim = h.querySelector(".zk-limit");
+    if (limit && limit.n > 0 && limit.n < 100) {
+      lim.hidden = false;
+      lim.style.left = limit.n + "%";
+      lim.title = `Charge limit ${limit.text}%`;
+    } else lim.hidden = true;
+
+    const range = this._num("sensor", "range", 0);
+    h.querySelector(".zk-range span").textContent = range ? `${range.text} ${range.unit || "km"} range` : "–";
+
+    const charging = this._st("binary_sensor", "charging");
+    const plugged = this._st("binary_sensor", "charger_plugged_in");
+    const pill = h.querySelector(".zk-charge");
+    const isCharging = !!charging && charging.state === "on";
+    const isPlugged = !!plugged && plugged.state === "on";
+    if (isCharging || isPlugged) {
+      const pw = this._num("sensor", "charging_power", 1);
+      pill.hidden = false;
+      pill.classList.toggle("on", isCharging);
+      pill.querySelector("span").textContent = isCharging
+        ? (pw && pw.n > 0 ? `Charging · ${pw.text} ${pw.unit}` : "Charging")
+        : "Plugged in";
+      pill.querySelector("ha-icon").setAttribute("icon", isCharging ? "mdi:lightning-bolt" : "mdi:power-plug");
+    } else pill.hidden = true;
+    h.querySelector(".zk-main").classList.toggle("charging", isCharging);
+
+    const chips = h.querySelectorAll(".zk-chip .v");
+    const tIn = this._num("sensor", "interior_temperature", 1);
+    const tOut = this._num("sensor", "exterior_temperature", 1);
+    const odo = this._num("sensor", "odometer", 0);
+    chips[0].textContent = tIn ? `${tIn.text}°` : "–";
+    chips[1].textContent = tOut ? `${tOut.text}°` : "–";
+    chips[2].textContent = odo ? `${odo.text} ${odo.unit || "km"}` : "–";
+    const rep = this._st("sensor", "last_status_report");
+    chips[3].textContent = (rep && this._ago(rep.state)) || "–";
+    h.querySelectorAll(".zk-chip").forEach((c) => {
+      c.hidden = c.querySelector(".v").textContent === "–";
+    });
+  }
+
+  _updateOpen() {
+    const pill = this._openPill;
+    if (!pill || !this._hass) return;
+    const open = ZK_OPEN.filter(([d, k]) => {
+      const st = this._st(d, k);
+      return st && (d === "lock" ? st.state === "unlocked" : st.state === "on");
+    }).map(([, , label]) => label);
+    pill.hidden = open.length === 0;
+    pill.querySelector("span").textContent = open.length ? `Open: ${open.join(", ")}` : "";
   }
 
   async _build() {
@@ -1793,13 +1746,39 @@ class ZeekrCard extends HTMLElement {
     const style = document.createElement("style");
     style.textContent = `
       .zeekr-card { display: flex; flex-direction: column; gap: 8px; }
-      .zk-stats { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
-      .zk-stat { background: var(--ha-card-background, var(--card-background-color));
-        border-radius: var(--ha-card-border-radius, 12px); padding: 10px 6px; text-align: center; cursor: pointer;
+      .zk-hero { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px;
+        background: var(--ha-card-background, var(--card-background-color));
+        border-radius: var(--ha-card-border-radius, 12px);
         border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color)); }
-      .zk-stat ha-icon { color: var(--state-icon-color, var(--primary-color)); --mdc-icon-size: 22px; }
-      .zk-val { font-size: 17px; font-weight: 500; color: var(--primary-text-color); margin-top: 2px; white-space: nowrap; }
-      .zk-lbl { font-size: 12px; color: var(--secondary-text-color); }
+      .zk-main { min-width: 0; cursor: pointer; display: flex; flex-direction: column; gap: 8px; }
+      .zk-soc-row { display: flex; align-items: baseline; gap: 4px; flex-wrap: wrap; }
+      .zk-soc { font-size: 44px; line-height: 1; font-weight: 500; color: var(--primary-text-color); letter-spacing: -1px; }
+      .zk-soc-unit { font-size: 18px; color: var(--secondary-text-color); margin-right: 8px; }
+      .zk-pill { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 3px 9px; border-radius: 999px;
+        background: var(--secondary-background-color); color: var(--secondary-text-color); align-self: center; }
+      .zk-pill ha-icon { --mdc-icon-size: 14px; }
+      .zk-pill.on { background: rgba(67, 160, 71, 0.18); color: var(--success-color, #43a047); }
+      .zk-bar { position: relative; height: 10px; border-radius: 999px; background: var(--secondary-background-color); overflow: hidden; }
+      .zk-fill { height: 100%; border-radius: 999px; transition: width .6s ease, background-color .3s; }
+      .zk-main.charging .zk-fill { background-image: linear-gradient(90deg, rgba(255,255,255,0), rgba(255,255,255,.4), rgba(255,255,255,0));
+        background-size: 60px 100%; background-repeat: no-repeat; animation: zk-flow 1.6s linear infinite; }
+      @keyframes zk-flow { from { background-position: -60px 0; } to { background-position: calc(100% + 60px) 0; } }
+      .zk-limit { position: absolute; top: 0; bottom: 0; width: 2px; background: var(--primary-text-color); opacity: .45; }
+      .zk-range { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--secondary-text-color); }
+      .zk-range ha-icon { --mdc-icon-size: 16px; }
+      .zk-chips { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; }
+      .zk-chip { display: flex; flex-direction: column; align-items: center; gap: 2px; text-align: center;
+        padding: 8px 4px; border-radius: 10px; background: var(--secondary-background-color); cursor: pointer; min-width: 0; }
+      .zk-chip ha-icon { --mdc-icon-size: 18px; color: var(--state-icon-color, var(--primary-color)); }
+      .zk-chip .v { font-size: 13px; font-weight: 500; max-width: 100%; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .zk-chip .l { font-size: 11px; color: var(--secondary-text-color); }
+      .zk-carwrap { position: relative; }
+      .zk-open { position: absolute; top: 10px; left: 10px; z-index: 2; display: flex; align-items: center; gap: 6px; max-width: 70%;
+        padding: 5px 10px; border-radius: 999px; font-size: 12px; font-weight: 500; color: #fff;
+        background: rgba(229, 57, 53, 0.92); box-shadow: 0 0 12px rgba(229, 57, 53, 0.5); }
+      .zk-open ha-icon { --mdc-icon-size: 16px; flex: none; }
+      .zk-open span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .zk-open[hidden], .zk-pill[hidden], .zk-limit[hidden], .zk-chip[hidden] { display: none; }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
@@ -1839,9 +1818,21 @@ class ZeekrCard extends HTMLElement {
         root.appendChild(sec);
       } else {
         const el = helpers.createCardElement(conf);
-        if (conf.type === "picture-elements") el.classList.add("zk-car");
         this._children.push(el);
-        root.appendChild(el);
+        if (conf.type === "picture-elements") {
+          el.classList.add("zk-car");
+          const wrap = document.createElement("div");
+          wrap.className = "zk-carwrap";
+          const pill = document.createElement("div");
+          pill.className = "zk-open";
+          pill.hidden = true;
+          pill.innerHTML = `<ha-icon icon="mdi:alert-circle"></ha-icon><span></span>`;
+          this._openPill = pill;
+          wrap.append(el, pill);
+          root.appendChild(wrap);
+        } else {
+          root.appendChild(el);
+        }
       }
     }
 
@@ -1849,6 +1840,7 @@ class ZeekrCard extends HTMLElement {
     this.innerHTML = "";
     this.appendChild(root);
     this._updateHeader();
+    this._updateOpen();
   }
 }
 

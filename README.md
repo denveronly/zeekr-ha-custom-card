@@ -3,7 +3,7 @@
 A Home Assistant dashboard card for the **Zeekr 001**, built for the
 [Zeekr EV integration (China / GRIC, English)](https://github.com/denveronly/zeekr_homeassistant_china_gric).
 
-- **Header:** battery, range, inside temperature, odometer
+- **Header:** big battery % with a colour-coded bar (charge-limit tick, animated while charging), range, a "Charging · 7.2 kW" / "Plugged in" pill, and chips for inside / outside temperature, odometer and last update
 - **The car:** a top-view photo with state badges for every door and window,
   hood and trunk, plus:
   - **All windows** open / close (centre of the roof)
@@ -11,8 +11,8 @@ A Home Assistant dashboard card for the **Zeekr 001**, built for the
   - **Charge port lid** toggle at the **left rear**, where the 001's port is
   - tyre pressure next to each wheel
   - anything **open** (door, window, hood, trunk, charge port lid) gets a
-    glowing **red** badge on its spot, and a red warning bar appears above the
-    car; both disappear when it's closed again
+    glowing **red** badge on its spot, and a red pill in the top-left corner of
+    the photo lists what's open; both disappear when it's closed again
 - **Quick actions:** lock, flash lights, sentry mode, sunshade
 - **Charging** drop-down: charging switch, plugged in, charge limit,
   power / voltage / current, time to full, charging schedule with start and
