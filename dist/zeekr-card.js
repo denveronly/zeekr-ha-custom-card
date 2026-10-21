@@ -15,7 +15,7 @@
  *     icon: mdi:timer-outline
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.6.0";
+const ZEEKR_CARD_VERSION = "1.7.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1568,6 +1568,7 @@ class ZeekrCard extends HTMLElement {
     this._updateActions();
     this._updateOverlays();
     this._updateSched();
+    this._updateCtrls();
   }
 
   getCardSize() {
@@ -1630,6 +1631,18 @@ class ZeekrCard extends HTMLElement {
       .filter((e) => e && e.entity);
   }
 
+  _extraIcon(e) {
+    if (e.icon) return e.icon;
+    const st = this._hass && this._hass.states[e.entity];
+    const unit = (st && st.attributes.unit_of_measurement) || "";
+    const name = `${e.entity} ${(st && st.attributes.friendly_name) || ""}`.toLowerCase();
+    if (/^(h|min|s)$/.test(unit) || /delay|timer|time/.test(name)) return "mdi:timer-outline";
+    if (unit === "A" || /current|amp/.test(name)) return "mdi:ev-plug-type2";
+    if (/^k?W$/.test(unit)) return "mdi:flash";
+    if (/^(input_)?select\./.test(e.entity)) return "mdi:ev-station";
+    return (st && st.attributes.icon) || "mdi:tune-variant";
+  }
+
   _fmt(st, digits) {
     if (!st) return null;
     const lang = (this._hass.locale && this._hass.locale.language) || undefined;
@@ -1660,7 +1673,7 @@ class ZeekrCard extends HTMLElement {
       const el = document.createElement("span");
       el.className = "zk-extra";
       el.title = e.name || e.entity;
-      el.innerHTML = e.icon ? `<ha-icon icon="${e.icon}"></ha-icon><b>–</b>` : `<b>–</b>`;
+      el.innerHTML = `<ha-icon icon="${this._extraIcon(e)}"></ha-icon><b>–</b>`;
       el.addEventListener("click", (ev) => {
         ev.stopPropagation();
         this._moreInfo(e.entity);
@@ -1720,6 +1733,9 @@ class ZeekrCard extends HTMLElement {
     for (const { e, el } of this._extraEls || []) {
       const st = this._hass.states[e.entity];
       el.querySelector("b").textContent = st ? this._fmt(st) : "–";
+      const ic = el.querySelector("ha-icon");
+      const want = this._extraIcon(e);
+      if (ic.getAttribute("icon") !== want) ic.setAttribute("icon", want);
       el.classList.toggle("na", !st || st.state === "unavailable");
     }
   }
@@ -1862,25 +1878,75 @@ class ZeekrCard extends HTMLElement {
       body.appendChild(row);
     }
 
-    // Extra entities (e.g. a wallbox) below the schedule
+    // Extra entities (e.g. a wallbox) below the schedule, as one compact row
     const extras = this._extras().filter((e) => this._has(e.entity));
     if (extras.length) {
-      const sel = extras.filter((e) => /^(input_)?select\./.test(e.entity));
-      const rest = extras.filter((e) => !/^(input_)?select\./.test(e.entity));
-      const tile = (e) => {
-        const card = { type: "tile", entity: e.entity };
-        if (e.name) card.name = e.name;
-        if (e.icon) card.icon = e.icon;
-        if (/^(input_)?number\./.test(e.entity)) card.features = [{ type: "numeric-input", style: "buttons" }];
-        else if (/^(input_)?select\./.test(e.entity)) card.features = [{ type: "select-options" }];
-        else if (/^(switch|input_boolean|light|fan)\./.test(e.entity)) card.tap_action = { action: "toggle" };
-        return card;
-      };
-      for (const e of sel) this._addCard(helpers, body, tile(e));
-      if (rest.length) {
-        this._addCard(helpers, body, {
-          type: "grid", columns: Math.min(2, rest.length), square: false, cards: rest.map(tile),
+      const row = document.createElement("div");
+      row.className = "zk-ctrl";
+      this._ctrls = [];
+      for (const e of extras) {
+        const dom = e.entity.split(".")[0];
+        const el = document.createElement("div");
+        el.className = "zk-ctrl-item";
+        el.title = e.name || e.entity;
+        if (dom === "select" || dom === "input_select") {
+          el.classList.add("sel");
+          el.innerHTML = `<ha-icon icon="${this._extraIcon(e)}"></ha-icon><select></select>`;
+          el.querySelector("select").addEventListener("change", (ev) =>
+            this._hass.callService(dom, "select_option", { entity_id: e.entity, option: ev.target.value }));
+        } else if (dom === "number" || dom === "input_number") {
+          el.innerHTML = `<ha-icon icon="${this._extraIcon(e)}"></ha-icon>
+            <button class="m" aria-label="Decrease">−</button><b>–</b><button class="p" aria-label="Increase">+</button>`;
+          const step = (dir) => {
+            const st = this._hass.states[e.entity];
+            if (!st) return;
+            const a = st.attributes;
+            const stp = Number(a.step) || 1;
+            let v = parseFloat(st.state) + dir * stp;
+            if (a.min !== undefined) v = Math.max(Number(a.min), v);
+            if (a.max !== undefined) v = Math.min(Number(a.max), v);
+            v = Number(v.toFixed(6));
+            this._hass.callService(dom, "set_value", { entity_id: e.entity, value: v });
+          };
+          el.querySelector(".m").addEventListener("click", () => step(-1));
+          el.querySelector(".p").addEventListener("click", () => step(1));
+        } else {
+          el.innerHTML = `<ha-icon icon="${this._extraIcon(e)}"></ha-icon><b>–</b>`;
+          el.addEventListener("click", () => this._call("homeassistant", "toggle", e.entity));
+        }
+        el.querySelector("ha-icon").addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          this._moreInfo(e.entity);
         });
+        row.appendChild(el);
+        this._ctrls.push({ e, el, dom });
+      }
+      body.appendChild(row);
+    }
+  }
+
+  _updateCtrls() {
+    if (!this._ctrls || !this._hass) return;
+    for (const { e, el, dom } of this._ctrls) {
+      const st = this._hass.states[e.entity];
+      el.classList.toggle("na", !st || st.state === "unavailable");
+      if (!st) continue;
+      if (dom === "select" || dom === "input_select") {
+        const sel = el.querySelector("select");
+        const opts = st.attributes.options || [];
+        if (sel.dataset.opts !== JSON.stringify(opts)) {
+          sel.innerHTML = opts.map((o) => `<option value="${String(o).replace(/"/g, "&quot;")}">${o}</option>`).join("");
+          sel.dataset.opts = JSON.stringify(opts);
+        }
+        if (document.activeElement !== sel) sel.value = st.state;
+      } else if (dom === "number" || dom === "input_number") {
+        el.querySelector("b").textContent = this._fmt(st);
+        const v = parseFloat(st.state);
+        el.querySelector(".m").disabled = st.attributes.min !== undefined && v <= Number(st.attributes.min);
+        el.querySelector(".p").disabled = st.attributes.max !== undefined && v >= Number(st.attributes.max);
+      } else {
+        el.querySelector("b").textContent = this._fmt(st);
+        el.classList.toggle("on", st.state === "on");
       }
     }
   }
@@ -2167,7 +2233,8 @@ class ZeekrCard extends HTMLElement {
       @keyframes zk-spin { to { transform: rotate(360deg); } }
       .zk-corner.tc { top: 10px; left: 50%; transform: translateX(-50%); }
       .zk-corner.tc.pressed { transform: translateX(-50%) scale(0.92); }
-      .zk-extras { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: -2px; }
+      .zk-hero { position: relative; }
+      .zk-extras { position: absolute; top: 14px; right: 16px; display: flex; gap: 6px; }
       .zk-extras[hidden] { display: none; }
       .zk-extra { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 999px;
         background: var(--secondary-background-color); color: var(--primary-text-color); cursor: pointer; }
@@ -2202,6 +2269,18 @@ class ZeekrCard extends HTMLElement {
       .zk-sched-t b { font-weight: 500; }
       .zk-sched:not(.on) .zk-sched-t { color: var(--secondary-text-color) !important; }
       .zk-sched-arrow { --mdc-icon-size: 16px; color: var(--secondary-text-color); }
+      .zk-ctrl { display: flex; flex-wrap: wrap; gap: 6px; margin: 0 12px; }
+      .zk-ctrl-item { flex: 1 1 0; min-width: 0; display: flex; align-items: center; gap: 4px; height: 40px; padding: 0 6px 0 10px;
+        border-radius: 12px; background: var(--secondary-background-color); color: var(--primary-text-color); }
+      .zk-ctrl-item.sel { flex: 1 1 100%; }
+      .zk-ctrl-item ha-icon { --mdc-icon-size: 18px; color: var(--state-icon-color, var(--primary-color)); flex: none; cursor: pointer; }
+      .zk-ctrl-item b { flex: 1; text-align: center; font-size: 14px; font-weight: 500; white-space: nowrap; }
+      .zk-ctrl-item button { width: 28px; height: 28px; flex: none; border: none; border-radius: 8px; cursor: pointer; font-size: 18px; line-height: 1;
+        background: var(--ha-card-background, var(--card-background-color)); color: var(--primary-text-color); }
+      .zk-ctrl-item button:disabled { opacity: .35; cursor: default; }
+      .zk-ctrl-item select { flex: 1; min-width: 0; height: 32px; border: none; border-radius: 8px; padding: 0 8px; font: inherit; font-size: 14px;
+        background: var(--ha-card-background, var(--card-background-color)); color: var(--primary-text-color); cursor: pointer; }
+      .zk-ctrl-item.na { opacity: .45; }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
@@ -2274,6 +2353,7 @@ class ZeekrCard extends HTMLElement {
     this._updateActions();
     this._updateOverlays();
     this._updateSched();
+    this._updateCtrls();
   }
 }
 

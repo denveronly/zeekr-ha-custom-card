@@ -50,7 +50,7 @@ Devices & services → Entities by searching "battery level": if the entity is
 | `image` | bundled image (top) or `/local/zeekr001_side.png` (side) | Car image URL |
 | `charging_open` | `false` | Start with the Charging section expanded |
 | `climate_open` | `false` | Start with the Climate section expanded |
-| `extra_entities` | none | Extra entities, e.g. a wallbox. Listed in Charging below the schedule; numbers also show top-left of the battery panel. Items are an entity ID or `{entity, name, icon}` |
+| `extra_entities` | none | Extra entities, e.g. a wallbox. Shown as compact controls in Charging below the schedule (dropdown for selects, − value + for numbers); numbers also show with an icon in the top-right corner of the battery panel. Items are an entity ID or `{entity, name, icon}`; icons are picked from the unit (h → timer, A → socket) unless you set one |
 
 Example with a wallbox:
 
