@@ -7,6 +7,7 @@
  * layout: top                   # top (default) or side
  * image: /local/my_car.png     # optional; top layout defaults to the bundled image
  * charging_open: false          # start with the Charging section expanded
+ * charger_power: sensor.x        # optional: wallbox power, bottom-right of the battery panel
  * extra_entities:               # optional: e.g. your wallbox; listed in Charging,
  *   - select.zeekrcharger_toggle_charging       # numbers also top-left of the battery panel
  *   - number.zeekrcharger_set_charge_current
@@ -15,7 +16,7 @@
  *     icon: mdi:timer-outline
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.8.0";
+const ZEEKR_CARD_VERSION = "1.9.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1666,8 +1667,18 @@ class ZeekrCard extends HTMLElement {
           <span class="zk-pill zk-charge" hidden><ha-icon icon="mdi:lightning-bolt"></ha-icon><span></span></span>
         </div>
         <div class="zk-bar"><div class="zk-fill"></div><div class="zk-limit" hidden></div></div>
-        <div class="zk-range" data-more="sensor:range"><ha-icon icon="mdi:map-marker-distance"></ha-icon><span>–</span></div>
+        <div class="zk-range-row">
+          <div class="zk-range" data-more="sensor:range"><ha-icon icon="mdi:map-marker-distance"></ha-icon><span>–</span></div>
+          <div class="zk-cpow" hidden><ha-icon icon="mdi:ev-station"></ha-icon><b>–</b></div>
+        </div>
       </div>`;
+    const cp = this._config.charger_power;
+    if (cp) {
+      hero.querySelector(".zk-cpow").addEventListener("click", (ev) => {
+        ev.stopPropagation();
+        this._moreInfo(cp);
+      });
+    }
     const ex = hero.querySelector(".zk-extras");
     this._extraEls = [];
     for (const e of this._extras().filter((x) => /^(input_)?number\.|^sensor\./.test(x.entity))) {
@@ -1730,6 +1741,16 @@ class ZeekrCard extends HTMLElement {
       pill.querySelector("ha-icon").setAttribute("icon", flowing ? "mdi:lightning-bolt" : isOn ? "mdi:power" : "mdi:power-plug");
     } else pill.hidden = true;
     h.querySelector(".zk-main").classList.toggle("charging", flowing);
+
+    const cpId = this._config.charger_power;
+    const cpEl = h.querySelector(".zk-cpow");
+    const cpSt = cpId && this._hass.states[cpId];
+    cpEl.hidden = !cpSt;
+    if (cpSt) {
+      cpEl.querySelector("b").textContent = this._fmt(cpSt);
+      const kw = parseFloat(cpSt.state);
+      cpEl.classList.toggle("on", flowing || (!isNaN(kw) && kw > 0));
+    }
 
     for (const { e, el } of this._extraEls || []) {
       const st = this._hass.states[e.entity];
@@ -2031,6 +2052,28 @@ class ZeekrCard extends HTMLElement {
         wrap.appendChild(b);
         this._corners.push({ b, domain, eid });
       }
+      const runId = id("number", "climate_run_duration");
+      if (this._has(runId)) {
+        const run = document.createElement("div");
+        run.className = "zk-run";
+        run.innerHTML = `<button class="m" aria-label="Shorter">−</button>
+          <div class="zk-run-v" title="Climate run time"><ha-icon icon="mdi:timer-outline"></ha-icon><b>–</b></div>
+          <button class="p" aria-label="Longer">+</button>`;
+        const step = (dir) => {
+          const st = this._hass.states[runId];
+          if (!st) return;
+          const a = st.attributes;
+          let v = parseFloat(st.state) + dir * (Number(a.step) || 1);
+          if (a.min !== undefined) v = Math.max(Number(a.min), v);
+          if (a.max !== undefined) v = Math.min(Number(a.max), v);
+          this._hass.callService("number", "set_value", { entity_id: runId, value: v });
+        };
+        run.querySelector(".m").addEventListener("click", (ev) => { ev.stopPropagation(); step(-1); });
+        run.querySelector(".p").addEventListener("click", (ev) => { ev.stopPropagation(); step(1); });
+        run.querySelector(".zk-run-v").addEventListener("click", (ev) => { ev.stopPropagation(); this._moreInfo(runId); });
+        wrap.appendChild(run);
+        this._run = { el: run, id: runId };
+      }
       body.appendChild(wrap);
     }
 
@@ -2058,16 +2101,6 @@ class ZeekrCard extends HTMLElement {
       body.appendChild(grid);
     }
 
-    const rest = this._prune({
-      type: "entities",
-      entities: [
-        { entity: id("number", "climate_run_duration"), name: "Climate run time" },
-      ],
-    });
-    if (rest && rest.entities.some((e) => e.entity)) {
-      rest.entities = rest.entities.filter((e, i, a) => e.entity || (a[i + 1] && a[i + 1].entity));
-      this._addCard(helpers, body, rest);
-    }
   }
 
   _updateSeats() {
@@ -2101,6 +2134,11 @@ class ZeekrCard extends HTMLElement {
   }
 
   _updateCorners() {
+    if (this._run && this._hass) {
+      const st = this._hass.states[this._run.id];
+      const v = st && parseFloat(st.state);
+      this._run.el.querySelector("b").textContent = st && !isNaN(v) ? `${Math.round(v)} min` : "–";
+    }
     if (!this._corners || !this._hass) return;
     for (const { b, domain, eid } of this._corners) {
       const st = this._hass.states[eid];
@@ -2293,11 +2331,11 @@ class ZeekrCard extends HTMLElement {
       .zk-ov-odo > div { display: flex; align-items: center; gap: 4px; }
       .zk-ov-odo > div + div b { font-weight: 400; color: var(--secondary-text-color); }
       .zk-ov-upd { top: 12px; right: 10px; transform: none; font-size: 11px; color: var(--secondary-text-color); }
-      .zk-corner.mid { top: 15%; left: 50%; transform: translateX(-50%); flex-direction: row; width: auto; gap: 6px;
+      .zk-corner.mid { top: 47%; left: 24%; transform: translate(-50%, -50%); flex-direction: row; width: auto; gap: 6px;
         padding: 5px 12px; border-radius: 999px; }
       .zk-corner.mid span { font-size: 12px; }
       .zk-corner.mid ha-icon { --mdc-icon-size: 18px; }
-      .zk-corner.mid.pressed { transform: translateX(-50%) scale(0.94); }
+      .zk-corner.mid.pressed { transform: translate(-50%, -50%) scale(0.94); }
       .zk-sched { display: flex; align-items: center; gap: 8px; margin: 0 12px; padding: 6px; border-radius: 12px;
         background: var(--secondary-background-color); }
       .zk-sched button { font: inherit; border: none; cursor: pointer; color: var(--primary-text-color); }
@@ -2334,6 +2372,20 @@ class ZeekrCard extends HTMLElement {
       .zk-seat.heat.on .zk-seg button.sel { background: rgba(255, 112, 67, 0.25); color: #ff7043; }
       .zk-seat.vent.on .zk-seg button.sel { background: rgba(79, 195, 247, 0.22); color: #4fc3f7; }
       .zk-seat.na { opacity: .45; }
+      .zk-range-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .zk-cpow { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; padding: 3px 10px; border-radius: 999px; cursor: pointer;
+        background: var(--secondary-background-color); color: var(--secondary-text-color); }
+      .zk-cpow ha-icon { --mdc-icon-size: 16px; }
+      .zk-cpow b { font-weight: 500; }
+      .zk-cpow.on { background: rgba(67, 160, 71, 0.18); color: var(--success-color, #43a047); }
+      .zk-cpow[hidden] { display: none; }
+      .zk-run { position: absolute; z-index: 2; top: 47%; left: 77%; transform: translate(-50%, -50%);
+        display: flex; flex-direction: column; align-items: center; gap: 2px; }
+      .zk-run button { width: 30px; height: 24px; border: none; border-radius: 8px; cursor: pointer; font: inherit; font-size: 16px; line-height: 1;
+        background: var(--secondary-background-color); color: var(--primary-text-color); }
+      .zk-run-v { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--primary-text-color); cursor: pointer; white-space: nowrap; }
+      .zk-run-v ha-icon { --mdc-icon-size: 14px; color: var(--secondary-text-color); }
+      .zk-run-v b { font-weight: 500; }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;

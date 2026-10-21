@@ -22,7 +22,7 @@ A Home Assistant dashboard card for the **Zeekr 001**, built for the
 - **Climate** drop-down: thermostat dial with the Heat/Cool and Off buttons
   right under it, rapid cool / rapid heat in the top corners and steering
   wheel heating / defrost in the bottom corners, the four heated seats then the two
-  ventilated seats with Off · 1 · 2 · 3 buttons (orange flame / blue wind when on), a "Pre" (pre-conditioning) toggle near the top of the dial, then climate run time
+  ventilated seats with Off · 1 · 2 · 3 buttons (orange flame / blue wind when on), a "Pre" (pre-conditioning) toggle left of the temperature and a − run time + stepper right of it
 
 ## Install (HACS)
 
@@ -50,6 +50,7 @@ Devices & services → Entities by searching "battery level": if the entity is
 | `image` | bundled image (top) or `/local/zeekr001_side.png` (side) | Car image URL |
 | `charging_open` | `false` | Start with the Charging section expanded |
 | `climate_open` | `false` | Start with the Climate section expanded |
+| `charger_power` | none | A wallbox power sensor, shown bottom-right of the battery panel; green while power flows |
 | `extra_entities` | none | Extra entities, e.g. a wallbox. Shown as compact controls in Charging below the schedule (dropdown for selects, − value + for numbers); numbers also show with an icon in the top-right corner of the battery panel. Items are an entity ID or `{entity, name, icon}`; icons are picked from the unit (h → timer, A → socket) unless you set one |
 
 Example with a wallbox:
@@ -61,6 +62,7 @@ extra_entities:
   - select.zeekrcharger_toggle_charging
   - number.zeekrcharger_charge_delay
   - number.zeekrcharger_set_charge_current
+charger_power: sensor.zeekrcharger_power
 ```
 
 No other plugins are needed: the card draws its own Charging and Climate
