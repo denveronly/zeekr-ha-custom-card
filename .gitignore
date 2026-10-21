@@ -1,2 +1,2 @@
 *.png
-!docs/*.png
+!dist/*.png

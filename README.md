@@ -44,7 +44,7 @@ Devices & services → Entities by searching "battery level": if the entity is
 | --- | --- | --- |
 | `prefix` | *(required)* | Entity prefix of your car |
 | `layout` | `top` | `top` for a top-view image, `side` for a 3/4 front-left photo |
-| `image` | `/local/zeekr001_top.png` (top) or `/local/zeekr001_side.png` (side) | Car image URL |
+| `image` | bundled image (top) or `/local/zeekr001_side.png` (side) | Car image URL |
 | `charging_open` | `false` | Start with the Charging section expanded |
 | `climate_open` | `false` | Start with the Climate section expanded |
 
@@ -53,17 +53,16 @@ drop-downs.
 
 ## Car image
 
-The `top` layout is tuned for a **600 × 700 px PNG with a transparent
-background**: the top-view car centred, front pointing up, filling about 54 %
-of the width and the full height. Save it as `/config/www/zeekr001_top.png`
-(Home Assistant serves it as `/local/zeekr001_top.png`; restart HA if the
-`www` folder is new).
+The `top` layout uses the top-view image bundled with the card
+(`dist/zeekr001_top.png`, downloaded by HACS to
+`/hacsfiles/zeekr-ha-custom-card/zeekr001_top.png`), so it works straight after
+install. To use your own picture instead, put it in `/config/www/` and set
+`image: /local/your_file.png`. The markers are positioned for a **600 × 700 px
+PNG with a transparent background**: car centred, front pointing up, filling
+about 54 % of the width and the full height.
 
 For the `side` layout, save a 3/4 front-left photo, car facing left and filling
 the frame, as `/config/www/zeekr001_side.png`.
-
-Car photos are not included in this repo because of copyright. Use your own
-photo or a press image you're allowed to use.
 
 ## Without HACS (plain YAML)
 

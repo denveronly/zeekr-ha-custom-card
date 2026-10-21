@@ -5,11 +5,11 @@
  * type: custom:zeekr-card
  * prefix: zeekr_001_            # your entity prefix (required)
  * layout: top                   # top (default) or side
- * image: /local/zeekr001_top.png  # optional, defaults per layout
+ * image: /local/my_car.png     # optional; top layout defaults to the bundled image
  * charging_open: false          # start with the Charging section expanded
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.1.0";
+const ZEEKR_CARD_VERSION = "1.2.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1655,8 +1655,10 @@ const ZEEKR_TEMPLATES = {
  ]
 };
 
+// The top-view image ships with the card (HACS downloads everything in dist/
+// to /hacsfiles/zeekr-ha-custom-card/). The side layout still needs your own photo.
 const DEFAULT_IMAGES = {
-  top: "/local/zeekr001_top.png",
+  top: "/hacsfiles/zeekr-ha-custom-card/zeekr001_top.png",
   side: "/local/zeekr001_side.png",
 };
 
