@@ -3,7 +3,7 @@
 A Home Assistant dashboard card for the **Zeekr 001**, built for the
 [Zeekr EV integration (China / GRIC, English)](https://github.com/denveronly/zeekr_homeassistant_china_gric).
 
-- **Header:** big battery % with a colour-coded bar (charge-limit tick, animated while charging), range, a "Charging · 7.2 kW" / "Plugged in" pill, and chips for inside / outside temperature, odometer and last update
+- **Header:** big battery % with a colour-coded bar (charge-limit tick, animated while charging), range, a "Charging · 7.2 kW" / "Plugged in" pill, and chips for inside temperature, odometer and last update
 - **The car:** a top-view photo with state badges for every door and window,
   hood and trunk, plus:
   - **All windows** open / close (centre of the roof)
@@ -14,12 +14,13 @@ A Home Assistant dashboard card for the **Zeekr 001**, built for the
     glowing **red** badge on its spot, and a red pill in the top-left corner of
     the photo lists what's open; both disappear when it's closed again
 - **Quick actions:** lock, flash lights, sentry mode, sunshade
-- **Charging** drop-down: charging switch, plugged in, charge limit,
-  power / voltage / current, time to full, charging schedule with start and
-  end time, charge port lid
-- **Climate** drop-down: thermostat, rapid cool / heat, run time, seat heating
-  and ventilation, steering wheel heating, defrost, outside temperature,
-  departure schedule
+- **Charging** drop-down: charging and charge-port toggles side by side, one
+  row with power · voltage · current · time to full, a charge-limit slider,
+  and schedule on/off with start and end time in one row
+- **Climate** drop-down: thermostat dial with the Heat/Cool and Off buttons
+  right under it, rapid cool / rapid heat in the top corners and steering
+  wheel heating / defrost in the bottom corners, a 2 × 2 grid of seat heating
+  and ventilation, then climate run time and the departure schedule
 
 ## Install (HACS)
 

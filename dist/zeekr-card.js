@@ -9,7 +9,7 @@
  * charging_open: false          # start with the Charging section expanded
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.3.0";
+const ZEEKR_CARD_VERSION = "1.4.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1589,6 +1589,8 @@ class ZeekrCard extends HTMLElement {
     (this._children || []).forEach((c) => (c.hass = hass));
     this._updateHeader();
     this._updateOpen();
+    this._updateLive();
+    this._updateCorners();
   }
 
   getCardSize() {
@@ -1658,7 +1660,6 @@ class ZeekrCard extends HTMLElement {
       </div>
       <div class="zk-chips">
         <div class="zk-chip" data-more="sensor:interior_temperature"><ha-icon icon="mdi:car-seat"></ha-icon><span class="v">–</span><span class="l">Inside</span></div>
-        <div class="zk-chip" data-more="sensor:exterior_temperature"><ha-icon icon="mdi:weather-partly-cloudy"></ha-icon><span class="v">–</span><span class="l">Outside</span></div>
         <div class="zk-chip" data-more="sensor:odometer"><ha-icon icon="mdi:counter"></ha-icon><span class="v">–</span><span class="l">Odometer</span></div>
         <div class="zk-chip" data-more="sensor:last_status_report"><ha-icon icon="mdi:access-point"></ha-icon><span class="v">–</span><span class="l">Updated</span></div>
       </div>`;
@@ -1711,13 +1712,11 @@ class ZeekrCard extends HTMLElement {
 
     const chips = h.querySelectorAll(".zk-chip .v");
     const tIn = this._num("sensor", "interior_temperature", 1);
-    const tOut = this._num("sensor", "exterior_temperature", 1);
     const odo = this._num("sensor", "odometer", 0);
     chips[0].textContent = tIn ? `${tIn.text}°` : "–";
-    chips[1].textContent = tOut ? `${tOut.text}°` : "–";
-    chips[2].textContent = odo ? `${odo.text} ${odo.unit || "km"}` : "–";
+    chips[1].textContent = odo ? `${odo.text} ${odo.unit || "km"}` : "–";
     const rep = this._st("sensor", "last_status_report");
-    chips[3].textContent = (rep && this._ago(rep.state)) || "–";
+    chips[2].textContent = (rep && this._ago(rep.state)) || "–";
     h.querySelectorAll(".zk-chip").forEach((c) => {
       c.hidden = c.querySelector(".v").textContent === "–";
     });
@@ -1732,6 +1731,177 @@ class ZeekrCard extends HTMLElement {
     }).map(([, , label]) => label);
     pill.hidden = open.length === 0;
     pill.querySelector("span").textContent = open.length ? `Open: ${open.join(", ")}` : "";
+  }
+
+  _has(id) {
+    return !this._hass || id in this._hass.states;
+  }
+
+  _prune(conf) {
+    return zkPrune(conf, (id) => this._has(id));
+  }
+
+  _call(domain, service, entityId) {
+    if (this._hass) this._hass.callService(domain, service, { entity_id: entityId });
+  }
+
+  // ---------- Charging section ----------
+  _buildCharging(helpers, body) {
+    const id = (d, k) => this._id(d, k);
+    const tiles = this._prune({
+      type: "grid", columns: 2, square: false,
+      cards: [
+        { type: "tile", entity: id("switch", "charging"), name: "Charging", icon: "mdi:ev-station",
+          tap_action: { action: "toggle" }, icon_tap_action: { action: "toggle" } },
+        { type: "tile", entity: id("lock", "charge_port_lid"), name: "Charge port", icon: "mdi:ev-plug-type2",
+          tap_action: { action: "toggle", confirmation: { text: "Open / close the charge port lid?" } },
+          icon_tap_action: { action: "toggle", confirmation: { text: "Open / close the charge port lid?" } } },
+      ],
+    });
+    if (tiles) this._addCard(helpers, body, tiles);
+
+    // live numbers in one row
+    const live = document.createElement("div");
+    live.className = "zk-live";
+    live.innerHTML = `
+      <div data-k="charging_power"><ha-icon icon="mdi:flash"></ha-icon><b>–</b><span>Power</span></div>
+      <div data-k="charging_voltage"><ha-icon icon="mdi:sine-wave"></ha-icon><b>–</b><span>Voltage</span></div>
+      <div data-k="charging_current"><ha-icon icon="mdi:current-ac"></ha-icon><b>–</b><span>Current</span></div>
+      <div data-k="estimated_full_charge_time"><ha-icon icon="mdi:timer-sand"></ha-icon><b>–</b><span>Full in</span></div>`;
+    live.querySelectorAll("[data-k]").forEach((el) =>
+      el.addEventListener("click", () => this._moreInfo(id("sensor", el.dataset.k))));
+    this._live = live;
+    body.appendChild(live);
+
+    const limit = this._prune({
+      type: "tile", entity: id("number", "charge_limit"), name: "Charge limit", icon: "mdi:battery-arrow-up",
+      features: [{ type: "numeric-input", style: "slider" }],
+    });
+    if (limit) this._addCard(helpers, body, limit);
+
+    const sched = this._prune({
+      type: "grid", columns: 3, square: false,
+      cards: [
+        { type: "tile", entity: id("switch", "charging_schedule"), name: "Schedule", icon: "mdi:calendar-clock",
+          vertical: true, tap_action: { action: "toggle" }, icon_tap_action: { action: "toggle" } },
+        { type: "tile", entity: id("time", "charging_start_time"), name: "Start", icon: "mdi:clock-start", vertical: true },
+        { type: "tile", entity: id("time", "charging_end_time"), name: "End", icon: "mdi:clock-end", vertical: true },
+      ],
+    });
+    if (sched) this._addCard(helpers, body, sched);
+  }
+
+  _updateLive() {
+    const live = this._live;
+    if (!live || !this._hass) return;
+    const charging = this._st("binary_sensor", "charging");
+    const on = !!charging && charging.state === "on";
+    live.classList.toggle("idle", !on);
+    live.querySelectorAll("[data-k]").forEach((el) => {
+      const k = el.dataset.k;
+      const v = this._num("sensor", k, k === "charging_power" ? 1 : 0);
+      let text = "–";
+      if (v) {
+        if (k === "estimated_full_charge_time" && (v.unit === "min" || v.unit === "")) {
+          const m = Math.round(v.n);
+          text = m >= 60 ? `${Math.floor(m / 60)}h ${m % 60}m` : `${m} min`;
+        } else {
+          text = `${v.text} ${v.unit}`.trim();
+        }
+      }
+      el.querySelector("b").textContent = text;
+      el.hidden = !this._has(this._id("sensor", k));
+    });
+  }
+
+  // ---------- Climate section ----------
+  _buildClimate(helpers, body) {
+    const id = (d, k) => this._id(d, k);
+    const climateId = id("climate", "climate");
+    if (this._has(climateId)) {
+      const wrap = document.createElement("div");
+      wrap.className = "zk-thermo";
+      const thermo = {
+        type: "thermostat", entity: climateId, name: " ",
+        features: [{ type: "climate-hvac-modes", hvac_modes: ["heat_cool", "off"], style: "icons" }],
+      };
+      this._addCard(helpers, wrap, thermo);
+      const corners = [
+        ["tl", "button", "rapid_cooling", "mdi:snowflake", "Rapid cool"],
+        ["tr", "button", "rapid_heating", "mdi:fire", "Rapid heat"],
+        ["bl", "switch", "steering_wheel_heating", "mdi:steering", "Wheel"],
+        ["br", "switch", "windshield_defrost", "mdi:car-defrost-front", "Defrost"],
+      ];
+      this._corners = [];
+      for (const [pos, domain, key, icon, label] of corners) {
+        const eid = id(domain, key);
+        if (!this._has(eid)) continue;
+        const b = document.createElement("button");
+        b.className = `zk-corner ${pos} ${domain}`;
+        b.title = label;
+        b.innerHTML = `<ha-icon icon="${icon}"></ha-icon><span>${label}</span>`;
+        b.addEventListener("click", (ev) => {
+          ev.stopPropagation();
+          if (domain === "button") this._call("button", "press", eid);
+          else this._call("switch", "toggle", eid);
+          b.classList.add("pressed");
+          setTimeout(() => b.classList.remove("pressed"), 600);
+        });
+        b.addEventListener("contextmenu", (ev) => {
+          ev.preventDefault();
+          this._moreInfo(eid);
+        });
+        wrap.appendChild(b);
+        this._corners.push({ b, domain, eid });
+      }
+      body.appendChild(wrap);
+    }
+
+    const seats = this._prune({
+      type: "grid", columns: 2, square: false,
+      cards: [
+        ["select", "seat_heating_driver", "Driver heat", "mdi:car-seat-heater"],
+        ["select", "seat_heating_passenger", "Passenger heat", "mdi:car-seat-heater"],
+        ["select", "seat_ventilation_driver", "Driver vent", "mdi:car-seat-cooler"],
+        ["select", "seat_ventilation_passenger", "Passenger vent", "mdi:car-seat-cooler"],
+        ["select", "seat_heating_rear_left", "Rear left heat", "mdi:car-seat-heater"],
+        ["select", "seat_heating_rear_right", "Rear right heat", "mdi:car-seat-heater"],
+      ].map(([d, k, name, icon]) => ({
+        type: "tile", entity: id(d, k), name, icon, features: [{ type: "select-options" }],
+      })),
+    });
+    if (seats) this._addCard(helpers, body, seats);
+
+    const rest = this._prune({
+      type: "entities",
+      entities: [
+        { entity: id("number", "climate_run_duration"), name: "Climate run time" },
+        { type: "section", label: "Departure" },
+        { entity: id("switch", "departure_schedule"), name: "Departure schedule" },
+        { entity: id("datetime", "scheduled_departure_time"), name: "Departure time" },
+        { entity: id("switch", "departure_climate"), name: "Pre-condition" },
+      ],
+    });
+    if (rest && rest.entities.some((e) => e.entity)) {
+      rest.entities = rest.entities.filter((e, i, a) => e.entity || (a[i + 1] && a[i + 1].entity));
+      this._addCard(helpers, body, rest);
+    }
+  }
+
+  _updateCorners() {
+    if (!this._corners || !this._hass) return;
+    for (const { b, domain, eid } of this._corners) {
+      const st = this._hass.states[eid];
+      b.classList.toggle("on", domain === "switch" && !!st && st.state === "on");
+    }
+  }
+
+  _addCard(helpers, parent, conf) {
+    const el = helpers.createCardElement(conf);
+    this._children.push(el);
+    if (this._hass) el.hass = this._hass;
+    parent.appendChild(el);
+    return el;
   }
 
   async _build() {
@@ -1779,6 +1949,26 @@ class ZeekrCard extends HTMLElement {
       .zk-open ha-icon { --mdc-icon-size: 16px; flex: none; }
       .zk-open span { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
       .zk-open[hidden], .zk-pill[hidden], .zk-limit[hidden], .zk-chip[hidden] { display: none; }
+      .zk-live { display: grid; grid-template-columns: repeat(auto-fit, minmax(0, 1fr)); grid-auto-flow: column; gap: 6px; padding: 0 12px; }
+      .zk-live > div { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 8px 4px; border-radius: 10px;
+        background: var(--secondary-background-color); cursor: pointer; min-width: 0; text-align: center; }
+      .zk-live ha-icon { --mdc-icon-size: 18px; color: var(--success-color, #43a047); }
+      .zk-live.idle ha-icon { color: var(--secondary-text-color); }
+      .zk-live b { font-size: 13px; font-weight: 500; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+      .zk-live span { font-size: 11px; color: var(--secondary-text-color); }
+      .zk-live > div[hidden] { display: none; }
+      .zk-thermo { position: relative; }
+      .zk-corner { position: absolute; z-index: 2; display: flex; flex-direction: column; align-items: center; gap: 2px;
+        width: 64px; padding: 8px 4px; border: none; border-radius: 14px; cursor: pointer; font: inherit;
+        background: var(--secondary-background-color); color: var(--primary-text-color); transition: transform .15s, background .2s; }
+      .zk-corner ha-icon { --mdc-icon-size: 22px; }
+      .zk-corner span { font-size: 11px; color: var(--secondary-text-color); }
+      .zk-corner.tl { top: 10px; left: 12px; } .zk-corner.tr { top: 10px; right: 12px; }
+      .zk-corner.bl { bottom: 64px; left: 12px; } .zk-corner.br { bottom: 64px; right: 12px; }
+      .zk-corner.tl ha-icon { color: #4fc3f7; } .zk-corner.tr ha-icon { color: #ff7043; }
+      .zk-corner.switch.on { background: rgba(255, 112, 67, 0.2); }
+      .zk-corner.switch.on ha-icon { color: #ff7043; }
+      .zk-corner.pressed { transform: scale(0.92); }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
@@ -1809,10 +1999,12 @@ class ZeekrCard extends HTMLElement {
         head.addEventListener("click", () => sec.classList.toggle("open"));
         const body = document.createElement("div");
         body.className = "zk-body";
-        for (const inner of conf.cards || []) {
-          const el = helpers.createCardElement(inner);
-          this._children.push(el);
-          body.appendChild(el);
+        if (conf.title === "Charging") {
+          this._buildCharging(helpers, body);
+        } else if (conf.title === "Climate") {
+          this._buildClimate(helpers, body);
+        } else {
+          for (const inner of conf.cards || []) this._addCard(helpers, body, inner);
         }
         sec.append(head, body);
         root.appendChild(sec);
@@ -1841,6 +2033,8 @@ class ZeekrCard extends HTMLElement {
     this.appendChild(root);
     this._updateHeader();
     this._updateOpen();
+    this._updateLive();
+    this._updateCorners();
   }
 }
 
