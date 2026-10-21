@@ -9,7 +9,7 @@
  * charging_open: false          # start with the Charging section expanded
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.4.0";
+const ZEEKR_CARD_VERSION = "1.5.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -194,11 +194,31 @@ const ZEEKR_TEMPLATES = {
     },
     {
      "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_front_left",
+     "style": {
+      "left": "11%",
+      "top": "26.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
+     }
+    },
+    {
+     "type": "state-label",
      "entity": "sensor.CAR_tire_pressure_front_right",
      "style": {
       "left": "89%",
       "top": "22%",
       "font-size": "12px"
+     }
+    },
+    {
+     "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_front_right",
+     "style": {
+      "left": "89%",
+      "top": "26.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
      }
     },
     {
@@ -212,11 +232,31 @@ const ZEEKR_TEMPLATES = {
     },
     {
      "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_rear_left",
+     "style": {
+      "left": "11%",
+      "top": "94.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
+     }
+    },
+    {
+     "type": "state-label",
      "entity": "sensor.CAR_tire_pressure_rear_right",
      "style": {
       "left": "89%",
       "top": "90%",
       "font-size": "12px"
+     }
+    },
+    {
+     "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_rear_right",
+     "style": {
+      "left": "89%",
+      "top": "94.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
      }
     },
     {
@@ -541,64 +581,7 @@ const ZEEKR_TEMPLATES = {
    ]
   },
   {
-   "type": "grid",
-   "columns": 4,
-   "square": false,
-   "cards": [
-    {
-     "type": "button",
-     "entity": "lock.CAR_door_lock",
-     "name": "Lock",
-     "tap_action": {
-      "action": "toggle",
-      "confirmation": {
-       "text": "Lock / unlock the car?"
-      }
-     }
-    },
-    {
-     "type": "button",
-     "entity": "button.CAR_flash_lights",
-     "name": "Flash",
-     "icon": "mdi:car-light-alert",
-     "tap_action": {
-      "action": "perform-action",
-      "perform_action": "button.press",
-      "target": {
-       "entity_id": "button.CAR_flash_lights"
-      }
-     }
-    },
-    {
-     "type": "button",
-     "entity": "switch.CAR_sentry_mode",
-     "name": "Sentry",
-     "tap_action": {
-      "action": "toggle"
-     }
-    },
-    {
-     "type": "button",
-     "entity": "button.CAR_refresh_now",
-     "name": "Refresh",
-     "icon": "mdi:refresh",
-     "tap_action": {
-      "action": "perform-action",
-      "perform_action": "button.press",
-      "target": {
-       "entity_id": "button.CAR_refresh_now"
-      }
-     }
-    },
-    {
-     "type": "button",
-     "entity": "cover.CAR_sunshade",
-     "name": "Sunshade",
-     "tap_action": {
-      "action": "toggle"
-     }
-    }
-   ]
+   "type": "zeekr-actions"
   },
   {
    "type": "custom:expander-card",
@@ -949,11 +932,31 @@ const ZEEKR_TEMPLATES = {
     },
     {
      "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_front_left",
+     "style": {
+      "left": "41%",
+      "top": "86.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
+     }
+    },
+    {
+     "type": "state-label",
      "entity": "sensor.CAR_tire_pressure_rear_left",
      "style": {
       "left": "91%",
       "top": "78%",
       "font-size": "12px"
+     }
+    },
+    {
+     "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_rear_left",
+     "style": {
+      "left": "91%",
+      "top": "82.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
      }
     },
     {
@@ -969,6 +972,17 @@ const ZEEKR_TEMPLATES = {
     },
     {
      "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_front_right",
+     "style": {
+      "left": "30%",
+      "top": "98.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
+     },
+     "prefix": "FR "
+    },
+    {
+     "type": "state-label",
      "entity": "sensor.CAR_tire_pressure_rear_right",
      "prefix": "RR ",
      "style": {
@@ -977,6 +991,17 @@ const ZEEKR_TEMPLATES = {
       "font-size": "11px",
       "opacity": 0.8
      }
+    },
+    {
+     "type": "state-label",
+     "entity": "sensor.CAR_tire_temperature_rear_right",
+     "style": {
+      "left": "55%",
+      "top": "98.5%",
+      "font-size": "11px",
+      "opacity": "0.7"
+     },
+     "prefix": "RR "
     },
     {
      "type": "conditional",
@@ -1300,64 +1325,7 @@ const ZEEKR_TEMPLATES = {
    ]
   },
   {
-   "type": "grid",
-   "columns": 4,
-   "square": false,
-   "cards": [
-    {
-     "type": "button",
-     "entity": "lock.CAR_door_lock",
-     "name": "Lock",
-     "tap_action": {
-      "action": "toggle",
-      "confirmation": {
-       "text": "Lock / unlock the car?"
-      }
-     }
-    },
-    {
-     "type": "button",
-     "entity": "button.CAR_flash_lights",
-     "name": "Flash",
-     "icon": "mdi:car-light-alert",
-     "tap_action": {
-      "action": "perform-action",
-      "perform_action": "button.press",
-      "target": {
-       "entity_id": "button.CAR_flash_lights"
-      }
-     }
-    },
-    {
-     "type": "button",
-     "entity": "switch.CAR_sentry_mode",
-     "name": "Sentry",
-     "tap_action": {
-      "action": "toggle"
-     }
-    },
-    {
-     "type": "button",
-     "entity": "button.CAR_refresh_now",
-     "name": "Refresh",
-     "icon": "mdi:refresh",
-     "tap_action": {
-      "action": "perform-action",
-      "perform_action": "button.press",
-      "target": {
-       "entity_id": "button.CAR_refresh_now"
-      }
-     }
-    },
-    {
-     "type": "button",
-     "entity": "cover.CAR_sunshade",
-     "name": "Sunshade",
-     "tap_action": {
-      "action": "toggle"
-     }
-    }
-   ]
+   "type": "zeekr-actions"
   },
   {
    "type": "custom:expander-card",
@@ -1591,6 +1559,7 @@ class ZeekrCard extends HTMLElement {
     this._updateOpen();
     this._updateLive();
     this._updateCorners();
+    this._updateActions();
   }
 
   getCardSize() {
@@ -1660,7 +1629,10 @@ class ZeekrCard extends HTMLElement {
       </div>
       <div class="zk-chips">
         <div class="zk-chip" data-more="sensor:interior_temperature"><ha-icon icon="mdi:car-seat"></ha-icon><span class="v">–</span><span class="l">Inside</span></div>
-        <div class="zk-chip" data-more="sensor:odometer"><ha-icon icon="mdi:counter"></ha-icon><span class="v">–</span><span class="l">Odometer</span></div>
+        <div class="zk-chip zk-odo">
+          <div class="zk-odo-line" data-more="sensor:odometer"><ha-icon icon="mdi:counter"></ha-icon><span class="v">–</span></div>
+          <div class="zk-odo-line" data-more="sensor:service_distance_remaining"><ha-icon icon="mdi:wrench-clock"></ha-icon><span class="v2">–</span></div>
+        </div>
         <div class="zk-chip" data-more="sensor:last_status_report"><ha-icon icon="mdi:access-point"></ha-icon><span class="v">–</span><span class="l">Updated</span></div>
       </div>`;
     hero.querySelectorAll("[data-more]").forEach((el) => {
@@ -1717,6 +1689,10 @@ class ZeekrCard extends HTMLElement {
     chips[1].textContent = odo ? `${odo.text} ${odo.unit || "km"}` : "–";
     const rep = this._st("sensor", "last_status_report");
     chips[2].textContent = (rep && this._ago(rep.state)) || "–";
+    const svc = this._num("sensor", "service_distance_remaining", 0);
+    const svcEl = h.querySelector(".zk-odo .v2");
+    svcEl.textContent = svc ? `${svc.text} ${svc.unit || "km"}` : "–";
+    svcEl.parentElement.hidden = !svc;
     h.querySelectorAll(".zk-chip").forEach((c) => {
       c.hidden = c.querySelector(".v").textContent === "–";
     });
@@ -1831,6 +1807,7 @@ class ZeekrCard extends HTMLElement {
         ["tr", "button", "rapid_heating", "mdi:fire", "Rapid heat"],
         ["bl", "switch", "steering_wheel_heating", "mdi:steering", "Wheel"],
         ["br", "switch", "windshield_defrost", "mdi:car-defrost-front", "Defrost"],
+        ["tc", "switch", "departure_climate", "mdi:car-clock", "Pre-cond."],
       ];
       this._corners = [];
       for (const [pos, domain, key, icon, label] of corners) {
@@ -1876,10 +1853,6 @@ class ZeekrCard extends HTMLElement {
       type: "entities",
       entities: [
         { entity: id("number", "climate_run_duration"), name: "Climate run time" },
-        { type: "section", label: "Departure" },
-        { entity: id("switch", "departure_schedule"), name: "Departure schedule" },
-        { entity: id("datetime", "scheduled_departure_time"), name: "Departure time" },
-        { entity: id("switch", "departure_climate"), name: "Pre-condition" },
       ],
     });
     if (rest && rest.entities.some((e) => e.entity)) {
@@ -1902,6 +1875,71 @@ class ZeekrCard extends HTMLElement {
     if (this._hass) el.hass = this._hass;
     parent.appendChild(el);
     return el;
+  }
+
+  _buildActions() {
+    const id = (d, k) => this._id(d, k);
+    const defs = [
+      { key: "lock", eid: id("lock", "door_lock"), icon: "mdi:lock", label: "Lock" },
+      { key: "flash", eid: id("button", "flash_lights"), icon: "mdi:car-light-high", label: "Flash" },
+      { key: "horn", eid: id("button", "horn_and_flash"), icon: "mdi:bullhorn-variant", label: "Horn" },
+      { key: "sentry", eid: id("switch", "sentry_mode"), icon: "mdi:cctv", label: "Sentry" },
+      { key: "refresh", eid: id("button", "refresh_now"), icon: "mdi:refresh", label: "Refresh" },
+    ].filter((d) => this._has(d.eid));
+    const row = document.createElement("div");
+    row.className = "zk-actions";
+    this._actions = [];
+    for (const d of defs) {
+      const b = document.createElement("button");
+      b.className = `zk-act ${d.key}`;
+      b.innerHTML = `<span class="zk-act-ic"><ha-icon icon="${d.icon}"></ha-icon></span><span class="zk-act-l">${d.label}</span>`;
+      b.addEventListener("click", () => this._action(d, b));
+      b.addEventListener("contextmenu", (ev) => {
+        ev.preventDefault();
+        this._moreInfo(d.eid);
+      });
+      row.appendChild(b);
+      this._actions.push({ d, b });
+    }
+    return row;
+  }
+
+  _action(d, b) {
+    const st = this._hass && this._hass.states[d.eid];
+    if (d.key === "lock") {
+      const locked = st && st.state === "locked";
+      if (!window.confirm(locked ? "Unlock the car?" : "Lock the car?")) return;
+      this._call("lock", locked ? "unlock" : "lock", d.eid);
+    } else if (d.key === "sentry") {
+      this._call("switch", "toggle", d.eid);
+    } else if (d.key === "horn") {
+      if (!window.confirm("Sound the horn?")) return;
+      this._call("button", "press", d.eid);
+    } else {
+      this._call("button", "press", d.eid);
+    }
+    b.classList.remove("busy");
+    void b.offsetWidth;
+    b.classList.add("busy");
+    setTimeout(() => b.classList.remove("busy"), d.key === "refresh" ? 1200 : 700);
+  }
+
+  _updateActions() {
+    if (!this._actions || !this._hass) return;
+    for (const { d, b } of this._actions) {
+      const st = this._hass.states[d.eid];
+      const s = st ? st.state : "";
+      if (d.key === "lock") {
+        const locked = s === "locked";
+        b.classList.toggle("ok", locked);
+        b.classList.toggle("warn", s === "unlocked" || s === "open");
+        b.querySelector("ha-icon").setAttribute("icon", locked ? "mdi:lock" : "mdi:lock-open-variant");
+        b.querySelector(".zk-act-l").textContent = locked ? "Locked" : s === "unlocked" ? "Unlocked" : "Lock";
+      } else if (d.key === "sentry") {
+        b.classList.toggle("on", s === "on");
+      }
+      b.classList.toggle("na", s === "unavailable");
+    }
   }
 
   async _build() {
@@ -1969,6 +2007,33 @@ class ZeekrCard extends HTMLElement {
       .zk-corner.switch.on { background: rgba(255, 112, 67, 0.2); }
       .zk-corner.switch.on ha-icon { color: #ff7043; }
       .zk-corner.pressed { transform: scale(0.92); }
+      .zk-odo { align-items: stretch; gap: 4px; }
+      .zk-odo-line { display: flex; align-items: center; justify-content: center; gap: 4px; min-width: 0; }
+      .zk-odo-line ha-icon { --mdc-icon-size: 15px; flex: none; }
+      .zk-odo-line .v, .zk-odo-line .v2 { font-size: 12px; font-weight: 500; color: var(--primary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+      .zk-odo-line .v2 { color: var(--secondary-text-color); font-weight: 400; }
+      .zk-odo-line[hidden] { display: none; }
+      .zk-actions { display: flex; justify-content: space-between; gap: 6px; padding: 10px 12px;
+        background: var(--ha-card-background, var(--card-background-color)); border-radius: var(--ha-card-border-radius, 12px);
+        border: var(--ha-card-border-width, 1px) solid var(--ha-card-border-color, var(--divider-color)); }
+      .zk-act { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; background: none; border: none;
+        padding: 2px 0; cursor: pointer; font: inherit; color: var(--secondary-text-color); min-width: 0; }
+      .zk-act-ic { width: 46px; height: 46px; border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        background: var(--secondary-background-color); color: var(--primary-text-color); transition: background .25s, color .25s, transform .15s, box-shadow .25s; }
+      .zk-act-ic ha-icon { --mdc-icon-size: 22px; }
+      .zk-act-l { font-size: 11px; white-space: nowrap; }
+      .zk-act:hover .zk-act-ic { transform: translateY(-1px); }
+      .zk-act:active .zk-act-ic { transform: scale(0.92); }
+      .zk-act.ok .zk-act-ic { background: rgba(67, 160, 71, 0.18); color: var(--success-color, #43a047); }
+      .zk-act.warn .zk-act-ic { background: rgba(249, 168, 37, 0.2); color: var(--warning-color, #f9a825); }
+      .zk-act.on .zk-act-ic { background: rgba(229, 57, 53, 0.18); color: var(--error-color, #e53935); box-shadow: 0 0 10px rgba(229, 57, 53, 0.35); }
+      .zk-act.na { opacity: 0.4; }
+      .zk-act.busy .zk-act-ic { box-shadow: 0 0 0 3px var(--primary-color); }
+      .zk-act.refresh.busy ha-icon { animation: zk-spin 1s linear; }
+      .zk-act.flash.busy .zk-act-ic { background: rgba(255, 213, 79, 0.3); color: #ffd54f; }
+      @keyframes zk-spin { to { transform: rotate(360deg); } }
+      .zk-corner.tc { top: 10px; left: 50%; transform: translateX(-50%); }
+      .zk-corner.tc.pressed { transform: translateX(-50%) scale(0.92); }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
@@ -1987,6 +2052,8 @@ class ZeekrCard extends HTMLElement {
     for (const conf of this._cardConfigs()) {
       if (conf.type === "zeekr-header") {
         root.appendChild(this._makeHeader());
+      } else if (conf.type === "zeekr-actions") {
+        root.appendChild(this._buildActions());
       } else if (conf.type === "custom:expander-card") {
         const sec = document.createElement("div");
         sec.className = "zk-section";
@@ -2035,6 +2102,7 @@ class ZeekrCard extends HTMLElement {
     this._updateOpen();
     this._updateLive();
     this._updateCorners();
+    this._updateActions();
   }
 }
 

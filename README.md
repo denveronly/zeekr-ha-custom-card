@@ -3,24 +3,24 @@
 A Home Assistant dashboard card for the **Zeekr 001**, built for the
 [Zeekr EV integration (China / GRIC, English)](https://github.com/denveronly/zeekr_homeassistant_china_gric).
 
-- **Header:** big battery % with a colour-coded bar (charge-limit tick, animated while charging), range, a "Charging · 7.2 kW" / "Plugged in" pill, and chips for inside temperature, odometer and last update
+- **Header:** big battery % with a colour-coded bar (charge-limit tick, animated while charging), range, a "Charging · 7.2 kW" / "Plugged in" pill, and chips for inside temperature, odometer + distance to next service, and last update
 - **The car:** a top-view photo with state badges for every door and window,
   hood and trunk, plus:
   - **All windows** open / close (centre of the roof)
   - **Trunk open / close** (rear)
   - **Charge port lid** toggle at the **left rear**, where the 001's port is
-  - tyre pressure next to each wheel
+  - tyre pressure and tyre temperature next to each wheel
   - anything **open** (door, window, hood, trunk, charge port lid) gets a
     glowing **red** badge on its spot, and a red pill in the top-left corner of
     the photo lists what's open; both disappear when it's closed again
-- **Quick actions:** lock, flash lights, sentry mode, sunshade
+- **Quick actions:** round buttons for lock (green when locked, amber when unlocked, asks before acting), flash, horn (asks first), sentry (red when on) and refresh; long-press for details
 - **Charging** drop-down: charging and charge-port toggles side by side, one
   row with power · voltage · current · time to full, a charge-limit slider,
   and schedule on/off with start and end time in one row
 - **Climate** drop-down: thermostat dial with the Heat/Cool and Off buttons
   right under it, rapid cool / rapid heat in the top corners and steering
   wheel heating / defrost in the bottom corners, a 2 × 2 grid of seat heating
-  and ventilation, then climate run time and the departure schedule
+  and ventilation, pre-conditioning at the top centre, then climate run time
 
 ## Install (HACS)
 
