@@ -16,7 +16,7 @@
  *     icon: mdi:timer-outline
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.9.0";
+const ZEEKR_CARD_VERSION = "1.9.1";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1669,7 +1669,7 @@ class ZeekrCard extends HTMLElement {
         <div class="zk-bar"><div class="zk-fill"></div><div class="zk-limit" hidden></div></div>
         <div class="zk-range-row">
           <div class="zk-range" data-more="sensor:range"><ha-icon icon="mdi:map-marker-distance"></ha-icon><span>–</span></div>
-          <div class="zk-cpow" hidden><ha-icon icon="mdi:ev-station"></ha-icon><b>–</b></div>
+          <div class="zk-cpow" hidden><ha-icon icon="mdi:car-electric"></ha-icon><b>–</b></div>
         </div>
       </div>`;
     const cp = this._config.charger_power;
