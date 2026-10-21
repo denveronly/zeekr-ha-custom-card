@@ -1661,10 +1661,10 @@ class ZeekrCard extends HTMLElement {
     hero.className = "zk-hero";
     hero.innerHTML = `
       <div class="zk-main" data-more="sensor:battery_level">
-        <div class="zk-extras"></div>
         <div class="zk-soc-row">
           <span class="zk-soc">–</span><span class="zk-soc-unit">%</span>
           <span class="zk-pill zk-charge" hidden><ha-icon icon="mdi:lightning-bolt"></ha-icon><span></span></span>
+          <div class="zk-extras"></div>
         </div>
         <div class="zk-bar"><div class="zk-fill"></div><div class="zk-limit" hidden></div></div>
         <div class="zk-range-row">
@@ -2312,7 +2312,7 @@ class ZeekrCard extends HTMLElement {
       .zk-corner.tc { top: 10px; left: 50%; transform: translateX(-50%); }
       .zk-corner.tc.pressed { transform: translateX(-50%) scale(0.92); }
       .zk-hero { position: relative; }
-      .zk-extras { position: absolute; top: 14px; right: 16px; display: flex; gap: 6px; }
+      .zk-extras { margin-left: auto; align-self: center; display: flex; gap: 6px; }
       .zk-extras[hidden] { display: none; }
       .zk-extra { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; padding: 2px 8px; border-radius: 999px;
         background: var(--secondary-background-color); color: var(--primary-text-color); cursor: pointer; }
