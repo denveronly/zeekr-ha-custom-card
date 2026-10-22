@@ -51,6 +51,9 @@ Devices & services → Entities by searching "battery level": if the entity is
 | `charging_open` | `false` | Start with the Charging section expanded |
 | `climate_open` | `false` | Start with the Climate section expanded |
 | `charger_power` | none | A wallbox power sensor, shown bottom-right of the battery panel; green while power flows |
+
+When **all** `extra_entities` and `charger_power` are unavailable (e.g. the wallbox loses power when the grid is down), the card shows a single amber **Offgrid** badge in the header and an "Offgrid · charger unavailable" line in Charging instead of the controls.
+
 | `extra_entities` | none | Extra entities, e.g. a wallbox. Shown as compact controls in Charging below the schedule (dropdown for selects, − value + for numbers); numbers also show with an icon in the top-right corner of the battery panel. Items are an entity ID or `{entity, name, icon}`; icons are picked from the unit (h → timer, A → socket) unless you set one |
 
 Example with a wallbox:

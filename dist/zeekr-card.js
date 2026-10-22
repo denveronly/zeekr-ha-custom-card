@@ -16,7 +16,7 @@
  *     icon: mdi:timer-outline
  * climate_open: false           # start with the Climate section expanded
  */
-const ZEEKR_CARD_VERSION = "1.9.1";
+const ZEEKR_CARD_VERSION = "1.10.0";
 
 const ZEEKR_TEMPLATES = {
  "top": [
@@ -1633,6 +1633,19 @@ class ZeekrCard extends HTMLElement {
       .filter((e) => e && e.entity);
   }
 
+  // The wallbox entities (extra_entities + charger_power) all go unavailable
+  // when the grid is down. Then show one "Offgrid" badge instead of dashes.
+  _chargerOffgrid() {
+    if (!this._hass) return false;
+    const ids = this._extras().map((e) => e.entity);
+    if (this._config.charger_power) ids.push(this._config.charger_power);
+    if (!ids.length) return false;
+    return ids.every((id) => {
+      const st = this._hass.states[id];
+      return !st || st.state === "unavailable" || st.state === "unknown";
+    });
+  }
+
   _extraIcon(e) {
     if (e.icon) return e.icon;
     const st = this._hass && this._hass.states[e.entity];
@@ -1693,7 +1706,13 @@ class ZeekrCard extends HTMLElement {
       ex.appendChild(el);
       this._extraEls.push({ e, el });
     }
-    ex.hidden = this._extraEls.length === 0;
+    const og = document.createElement("span");
+    og.className = "zk-extra zk-offgrid";
+    og.hidden = true;
+    og.innerHTML = `<ha-icon icon="mdi:transmission-tower-off"></ha-icon><b>Offgrid</b>`;
+    ex.appendChild(og);
+    this._offgridChip = og;
+    ex.hidden = this._extraEls.length === 0 && !this._config.charger_power;
     hero.querySelectorAll("[data-more]").forEach((el) => {
       el.addEventListener("click", (ev) => {
         ev.stopPropagation();
@@ -1752,7 +1771,12 @@ class ZeekrCard extends HTMLElement {
       cpEl.classList.toggle("on", flowing || (!isNaN(kw) && kw > 0));
     }
 
+    const offgrid = this._chargerOffgrid();
+    if (this._offgridChip) this._offgridChip.hidden = !offgrid;
+    if (offgrid) cpEl.hidden = true;
+
     for (const { e, el } of this._extraEls || []) {
+      el.hidden = offgrid;
       const st = this._hass.states[e.entity];
       el.querySelector("b").textContent = st ? this._fmt(st) : "–";
       const ic = el.querySelector("ha-icon");
@@ -1943,12 +1967,22 @@ class ZeekrCard extends HTMLElement {
         row.appendChild(el);
         this._ctrls.push({ e, el, dom });
       }
+      const og = document.createElement("div");
+      og.className = "zk-ctrl-offgrid";
+      og.hidden = true;
+      og.innerHTML = `<ha-icon icon="mdi:transmission-tower-off"></ha-icon><span><b>Offgrid</b> · charger unavailable</span>`;
+      body.appendChild(og);
+      this._ctrlOffgrid = og;
+      this._ctrlRow = row;
       body.appendChild(row);
     }
   }
 
   _updateCtrls() {
     if (!this._ctrls || !this._hass) return;
+    const offgrid = this._chargerOffgrid();
+    if (this._ctrlRow) this._ctrlRow.hidden = offgrid;
+    if (this._ctrlOffgrid) this._ctrlOffgrid.hidden = !offgrid;
     for (const { e, el, dom } of this._ctrls) {
       const st = this._hass.states[e.entity];
       el.classList.toggle("na", !st || st.state === "unavailable");
@@ -2386,6 +2420,15 @@ class ZeekrCard extends HTMLElement {
       .zk-run-v { display: flex; align-items: center; gap: 3px; font-size: 12px; color: var(--primary-text-color); cursor: pointer; white-space: nowrap; }
       .zk-run-v ha-icon { --mdc-icon-size: 14px; color: var(--secondary-text-color); }
       .zk-run-v b { font-weight: 500; }
+      .zk-offgrid { background: rgba(249, 168, 37, 0.18); color: var(--warning-color, #f9a825); }
+      .zk-offgrid ha-icon { color: var(--warning-color, #f9a825) !important; }
+      .zk-extra[hidden] { display: none; }
+      .zk-ctrl[hidden] { display: none; }
+      .zk-ctrl-offgrid { display: flex; align-items: center; gap: 8px; margin: 0 12px; padding: 10px 12px; border-radius: 12px;
+        background: rgba(249, 168, 37, 0.14); color: var(--warning-color, #f9a825); font-size: 13px; }
+      .zk-ctrl-offgrid ha-icon { --mdc-icon-size: 18px; }
+      .zk-ctrl-offgrid b { font-weight: 500; }
+      .zk-ctrl-offgrid[hidden] { display: none; }
       .zk-car { --ha-card-background: transparent; --card-background-color: transparent;
         --ha-card-box-shadow: none; --ha-card-border-width: 0; }
       .zk-section { border-radius: var(--ha-card-border-radius, 12px); overflow: hidden;
